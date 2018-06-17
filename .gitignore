@@ -1,7 +1,10 @@
 #python
-*.pyc
-*.pyo
-
+*.py[cod]
+*.so
+*.egg
+build
+dist
+#windows
 
 #c
 *.o
