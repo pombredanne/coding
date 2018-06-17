@@ -1,0 +1,9 @@
+#python
+.pyc
+.pyo
+
+
+#c
+.o
+.s
+.arm
