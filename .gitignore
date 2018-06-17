@@ -1,9 +1,9 @@
 #python
-.pyc
-.pyo
+*.pyc
+*.pyo
 
 
 #c
-.o
-.s
-.arm
+*.o
+*.s
+*.arm
