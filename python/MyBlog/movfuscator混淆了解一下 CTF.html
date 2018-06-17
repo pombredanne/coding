@@ -1,0 +1,224 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   movfuscator混淆了解一下 CTF
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年04月10日 00:14:08
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：61
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     参考文章
+     <br/>
+     <a href="https://pediy.com/thread-208786.htm" rel="nofollow">
+      https://pediy.com/thread-208786.htm
+     </a>
+    </p>
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     这次来了解一下movfuscator混淆。
+    </p>
+    <h3 id="例题一">
+     例题一
+    </h3>
+    <p>
+     <a href="https://secgroup.github.io/2017/02/06/alexctf2017-writeup-packed-movement/" rel="nofollow">
+      https://secgroup.github.io/2017/02/06/alexctf2017-writeup-packed-movement/
+     </a>
+     <br/>
+     这是一道AlexCTF 2017的re。首先拿到题目，查壳是upx，使用upx -d脱壳。
+     <br/>
+     ida反汇编可以看到全是mov指令，并且在开头注册了两个信号。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180409004458951?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     不知道怎么下手，我们尝试运行一下程序，要求我们输入flag，这其中肯定存在cmp逻辑，就是不知道会不会对我们的输入进行一个加密处理。全局搜索字符串，发现全是乱七八糟的东西。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180409004731077?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     不过还是发现了一些端倪，可以看到well done！
+     <br/>
+     向上回溯，可以看到wrong flag ，strlen等字样，并且还注意到了”}”字符，
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180409005146861?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     继续向上看，，发现类似的字符
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180409005231434?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     因此我们便对mov R2 ，#立即数 这条指令产生了兴趣，全局搜索一下，便可得到flag。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180409005445431?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <h3 id="例题二">
+     例题二
+    </h3>
+    <p>
+     <a href="https://github.com/ctfs/write-ups-2015/tree/master/ekoparty-pre-ctf-2015/rev/mov" rel="nofollow">
+      https://github.com/ctfs/write-ups-2015/tree/master/ekoparty-pre-ctf-2015/rev/mov
+     </a>
+     <br/>
+     这题基本思路还是类似的，也是全局搜索关键字符串，然后向上回溯。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180409012007644?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     因为我们知道flag格式即为EKO{}而刚好这个字符串中有一个EKO{%s}字样，可以猜测，这时在stack中应该能看到flag，但是我在用IDA调试的时候发现程序一运行就自动结束了。所以我就用gdb来attatch了。
+     <br/>
+     通过ida可以知道我们在0804B41B 处下断点。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180409012303791?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     最终可以得到flag
+     <br/>
+     EKO{All_You_Need_Is_m0v}
+     <br/>
+     ###例题三SusCTF 2018 MoVfuscationl
+     <br/>
+     <a href="https://github.com/susers/Writeups/tree/master/2018/SUSCTF/Reverse/movfuscation1" rel="nofollow">
+      https://github.com/susers/Writeups/tree/master/2018/SUSCTF/Reverse/movfuscation1
+     </a>
+     <br/>
+     这道题如果不采用逐位爆破的方式去解就会比较难了，我这里两种方法都实现一遍。
+     <br/>
+     运行程序，测试发现它会将正确字符打印出来，因此可以采用逐位爆破的方法。
+     <br/>
+     写个脚本如下：
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">import</span> string
+<span class="hljs-keyword">import</span> subprocess
+<span class="hljs-keyword">import</span> sys
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">main</span><span class="hljs-params">()</span>:</span>
+    bin=<span class="hljs-string">"354e846facdf6f3d3205a1465d2fd811"</span>
+    flag=<span class="hljs-string">""</span>
+    length=<span class="hljs-number">0</span>
+    <span class="hljs-keyword">while</span> <span class="hljs-number">1</span>:
+        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> string.printable:
+            p = subprocess.Popen(<span class="hljs-string">"./%s"</span> % bin,stdin=subprocess.PIPE,stdout=subprocess.PIPE)
+            p.stdin.write(<span class="hljs-string">"1\n"</span>)
+            p.stdin.write(flag+i+<span class="hljs-string">"\n"</span>)
+            output = p.stdout.readlines()[-<span class="hljs-number">1</span>]
+            <span class="hljs-keyword">if</span> len(output)-<span class="hljs-number">8</span> &gt; length:
+                length+=<span class="hljs-number">1</span>
+                flag+=i
+                <span class="hljs-keyword">print</span> flag
+                <span class="hljs-keyword">break</span>
+<span class="hljs-keyword">if</span> __name__==<span class="hljs-string">"__main__"</span>:
+    main()</code></pre>
+    <p>
+     第二种方法：直接调试，哈哈我没调出来。GG
+     <br/>
+     <strong>
+      <em>
+       4.11更新。
+      </em>
+     </strong>
+     <br/>
+     这里我是通过自己写个demo然后用movfuscator混淆后对比来看代码的。
+     <br/>
+     <a href="https://github.com/xoreaxeaxeax/movfuscator" rel="nofollow">
+      https://github.com/xoreaxeaxeax/movfuscator
+     </a>
+     照着做编译不会有什么问题的。我实在kali 64下编译通过的。
+     <br/>
+     还有个链接可以参考一下
+     <a href="https://labs.mwrinfosecurity.com/blog/avrop/" rel="nofollow">
+      https://labs.mwrinfosecurity.com/blog/avrop/
+     </a>
+     应该会有点价值
+     <br/>
+     这题我问了一下出题的师傅，理解了大概的思路。
+    </p>
+    <pre class="prettyprint"><code class=" hljs axapta">demo.c
+<span class="hljs-preprocessor">#include&lt;stdio.h&gt;</span>
+<span class="hljs-keyword">int</span> main(<span class="hljs-keyword">void</span>){
+    <span class="hljs-keyword">char</span>* <span class="hljs-keyword">str</span> = <span class="hljs-string">"CTF{"</span>;
+    <span class="hljs-keyword">int</span> cmp[]={<span class="hljs-number">67</span>};
+    <span class="hljs-keyword">int</span> pos[]={<span class="hljs-number">2</span>,<span class="hljs-number">0</span>,<span class="hljs-number">3</span>};
+    <span class="hljs-keyword">if</span>(<span class="hljs-keyword">str</span>[<span class="hljs-number">0</span>]==cmp[pos[<span class="hljs-number">1</span>]]){
+        printf(<span class="hljs-string">"%c"</span>,<span class="hljs-keyword">str</span>[<span class="hljs-number">0</span>]);
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</code></pre>
+    <p>
+     我自己写了个demo然后movcc编译。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180412010304111?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     我在data段发现了这些字符。包括pos数组。虽然混淆后的程序很难懂，但是data段中的数据出卖了出题者。
+     <br/>
+     我们可以来看一下题目中的data段的数据。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180412010706567?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     从这些数据，并且结合指令的逻辑，因为全是mov指令，它是一条线下来的，而且movcc是无法混淆库函数的。因此我们可以进行大胆的推测整个程序的逻辑。
+     <br/>
+     显示比较SUSCTF{，之后通过pos[i]获取固定字符串的偏移量，循环的进行比较，那么这个pos[i]数组就应该是事先定义好的，可以看到0x0804f020开始的数据很想是pos[i]数组，注意偏移量0对应的字符应该是”1”,所以我们可以根据偏移量求出{}之间的flag
+     <br/>
+     最终可以得到flag。
+     <br/>
+     <strong>
+      <em>
+       虽然最终还是没有用调试的方法硬干，但是这也不失为一种方法吧！刚完睡觉！晚安！xinxin
+      </em>
+     </strong>
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     怎么说呢，本来先看下movfuscator这个项目的，但是环境一直搭建不起来，所以也就放弃了。
+     <br/>
+     通过这几个题可以初步了解一下movfuscator混淆。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79860304
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=reverse&amp;t=blog" target="_blank">
+    reverse
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=movfuscator&amp;t=blog" target="_blank">
+    movfuscator
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

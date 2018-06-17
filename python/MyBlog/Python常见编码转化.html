@@ -1,0 +1,139 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   Python常见编码转化
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年02月09日 13:31:27
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：117
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     最近在做题遇到一些很捉鸡的事情，在编码转化上卡了很久，因此特就常见的编码做一个总结。
+     <br/>
+     python中比较常见的两个编码转化模块binascii和libnum
+    </p>
+    <h3 id="一16进制转化为字符串">
+     一、16进制转化为字符串
+    </h3>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">import</span> binascii
+<span class="hljs-keyword">from</span> libnum <span class="hljs-keyword">import</span> n2s,s2n</code></pre>
+    <p>
+     还是由繁到简的顺序来说一下。
+     <br/>
+     binascii模块中常用的binascii.hexlify()和binascii.unhexlify()  16进制和字符串之间的相互转化，其实就是ASCII的转化
+    </p>
+    <pre class="prettyprint"><code class=" hljs php">flag=<span class="hljs-string">"test"</span>
+<span class="hljs-keyword">print</span> binascii.hexlify(flag) <span class="hljs-comment">#74657374</span></code></pre>
+    <p>
+     但是将16进制转化为字符串时要注意，不能直接
+    </p>
+    <pre class="prettyprint"><code class=" hljs php">hflag=<span class="hljs-number">74657374</span>
+<span class="hljs-keyword">print</span> binascii.unhexlify(hflag)  <span class="hljs-comment">#错误示例</span></code></pre>
+    <p>
+     binascii.unhexlify()接受的是一个16的字符串。
+    </p>
+    <pre class="prettyprint"><code class=" hljs php">hflag=<span class="hljs-number">74657374</span>
+<span class="hljs-keyword">print</span> binascii.unhexlify(str(hflag)) <span class="hljs-comment">#test</span></code></pre>
+    <p>
+     如果不使用binascii模块也可以。
+    </p>
+    <pre class="prettyprint"><code class=" hljs php">flag=<span class="hljs-string">"test"</span>
+<span class="hljs-keyword">print</span> flag.encode(<span class="hljs-string">"hex"</span>) <span class="hljs-comment">#74657374</span>
+<span class="hljs-keyword">print</span> hflag=<span class="hljs-string">"74657374"</span>.decode(<span class="hljs-string">"hex"</span>) <span class="hljs-comment">#test</span></code></pre>
+    <p>
+     使用字符串内嵌的函数也可以进行转化。
+     <br/>
+     如果需要进行整数的转化，则必须先将整数转化为16进制后才可以
+    </p>
+    <h3 id="二10进制16进制转化">
+     二、10进制16进制转化
+    </h3>
+    <pre class="prettyprint"><code class=" hljs perl"><span class="hljs-keyword">print</span> <span class="hljs-keyword">int</span>(<span class="hljs-string">"74657374"</span>,<span class="hljs-number">16</span>) <span class="hljs-comment">#1952805748</span>
+<span class="hljs-keyword">print</span> <span class="hljs-keyword">hex</span>(<span class="hljs-number">1952805748</span>)    <span class="hljs-comment">#0x74657374</span></code></pre>
+    <p>
+     int()可以将字符串用base进制解析，转化为10进制整数
+     <br/>
+     hex()将整数转化为16进制
+     <br/>
+     <strong>
+      字符串和整形可以使用str()和int()进行快速的变化
+     </strong>
+    </p>
+    <h3 id="三libnum模块的使用">
+     三、libnum模块的使用
+    </h3>
+    <p>
+     如果我们已知一串10进制数字
+    </p>
+    <pre class="prettyprint"><code class=" hljs php">iflag=<span class="hljs-number">1952805748</span>
+<span class="hljs-keyword">print</span> n2s(iflag) <span class="hljs-comment">#test</span>
+<span class="hljs-keyword">print</span> s2n(<span class="hljs-string">"test"</span>)<span class="hljs-comment">#1952805748</span></code></pre>
+    <p>
+     如果这时非要使用binascii模块就会比较麻烦
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl"><span class="hljs-keyword">print</span> binascii.unhexlify(<span class="hljs-keyword">hex</span>(iflag)[<span class="hljs-number">2</span>:]) <span class="hljs-comment">#test</span></code></pre>
+    <p>
+     如果iflag长度很长那么需要使用[2:-1]进行分片
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     反正平时多去练，编码转化的方式有很多，找一种合适自己习惯的。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79297527
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=编码&amp;t=blog" target="_blank">
+    编码
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=python&amp;t=blog" target="_blank">
+    python
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7452180" target="_blank">
+    python
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

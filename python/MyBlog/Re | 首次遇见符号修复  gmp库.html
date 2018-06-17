@@ -1,0 +1,146 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   Re | 首次遇见符号修复  gmp库
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年04月17日 20:22:03
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：26
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     第一次遇见符号修复，于是就记录下来了。
+    </p>
+    <h3 id="分析">
+     分析
+    </h3>
+    <p>
+     首先拿到题目，emmm，全是IDA无法识别的函数，而且函数表特别多，说明程序去除了符号表,并且使用的是静态链接。所以需要手动修复符号表。全局搜索字符串可以看到gmp字样，猜测是使用了gmp的静态库。（当然可以使用nm ldd 等命令来进行查看)
+    </p>
+    <h3 id="获取gmp的静态库">
+     获取gmp的静态库
+    </h3>
+    <p>
+     网上搜索了一番没找到现成的静态库，所以只能字节编译了。
+     <br/>
+     按着
+     <a href="https://www.jianshu.com/p/a3e9cd51d0e6" rel="nofollow">
+      这里的
+     </a>
+     步骤来。就可以成功的获取到libgmp.a
+     <br/>
+     ###生成sig签名文件
+     <br/>
+     这里可以参考我写的另一篇
+     <a href="https://blog.csdn.net/qq_33438733/article/details/79965348" rel="nofollow">
+      博客
+     </a>
+     <br/>
+     我在生成sig签名时遇到了一个问题，还好最终解决了。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180417084841353?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     提示我在aors.o模块中出现未知的重定位符。怎么办？
+     <br/>
+     使用ar -d删除有问题的模块，直到不再报错。将生成的sig文件导入后，发现程序仍然很模糊！
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180417193818069?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     但是相比一开始还是能隐约分辨出一些东西的！但是为什么仅仅识别出了一部分的gmp的函数呢？！这部分我放到后面。
+    </p>
+    <h3 id="分析算法">
+     分析算法
+    </h3>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180417201825826?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     这里需要取了解一下gmp的库函数都是干什么的。基本上就是一个ras。得到p,q,e,n就可以解决了。。还好我对rsa也比较的了解。简单分析了一下
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/2018041723050890?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+    </p>
+    <h3 id="解题脚本">
+     解题脚本
+    </h3>
+    <pre class="prettyprint"><code class=" hljs ini"><span class="hljs-setting">c=<span class="hljs-value"><span class="hljs-number">0</span>x448EEEBA1CF31BA2E9E22A9E6F37AB2C70A2E19485E819A8CB5D897E65B01DB6E692DD6D0B30  </span></span>
+<span class="hljs-setting">e=<span class="hljs-value"><span class="hljs-number">65537</span></span></span>
+<span class="hljs-setting">q=<span class="hljs-value"><span class="hljs-number">0</span>x9703D6BF1C83E5283B493280E3023189C1FCEB</span></span>
+<span class="hljs-setting">p=<span class="hljs-value"><span class="hljs-number">0</span>xD0E7CDA746B95CC87A9950A39D517741673BB5</span></span></code></pre>
+    <p>
+     emm脚本写的太丑了，就不贴了！
+    </p>
+    <h3 id="解决问题">
+     解决问题
+    </h3>
+    <p>
+     之后我便开始了解决问题的过程。一开始我以为是因为IDA68和IDA70的区别，于时我在两个版本下分别生成了sig文件。但是结果是一样的。我之前实在gcc-7.4的环境下编译的gmp，我想会不会是因为编译环境的不同造成的！于时我使用ubuntu14.04(gcc-4.8.4)再次编译gmp得到对应的.a文件。同样的生成sig文件，这时我发现，在生成pat文件时，没有报错。同样的导入到IDA中，发现更加匹配不上了，基本上没有改变！这时我大概想到问题的原因是gcc版本的不同！但是我不会更改gcc的版本，而且我总不可能每个版本都尝试一遍吧。所以我请教了一下出题人，他使用的是gcc-5.4，好吧，正好学一波如何切换gcc的版本。
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     通过这次的题目，确实学到了很多东西！符号表的修复，gcc的切换，遇到问题，解决问题的过程和方法！生活很美好！
+    </p>
+    <h3 id="参考文章">
+     参考文章
+    </h3>
+    <p>
+     <a href="https://blog.csdn.net/liboyang71/article/details/77152577" rel="nofollow">
+      https://blog.csdn.net/liboyang71/article/details/77152577
+     </a>
+     <br/>
+     <a href="https://blog.csdn.net/TinyMore/article/details/68921884" rel="nofollow">
+      https://blog.csdn.net/TinyMore/article/details/68921884
+     </a>
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79968964
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=gmp&amp;t=blog" target="_blank">
+    gmp
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7599290" target="_blank">
+    Re
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

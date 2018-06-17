@@ -1,0 +1,214 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   ubuntu折腾笔记【二】
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年06月05日 02:56:36
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：25
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     爱折腾。
+    </p>
+    <h3 id="安装常用软件">
+     安装常用软件
+    </h3>
+    <h6 id="1shadowsocks">
+     1.shadowsocks
+    </h6>
+    <p>
+     apt-get install python-pip
+     <br/>
+     pip install shadowsocks
+     <br/>
+     编写shadowsocks.json配置文件
+    </p>
+    <pre class="prettyprint"><code class=" hljs json">{
+  "<span class="hljs-attribute">server</span>":<span class="hljs-value"><span class="hljs-string">"my_server_ip"</span></span>,
+  "<span class="hljs-attribute">local_address</span>": <span class="hljs-value"><span class="hljs-string">"127.0.0.1"</span></span>,
+  "<span class="hljs-attribute">local_port</span>":<span class="hljs-value"><span class="hljs-number">1080</span></span>,
+  "<span class="hljs-attribute">server_port</span>":<span class="hljs-value">my_server_port</span>,
+  "<span class="hljs-attribute">password</span>":<span class="hljs-value"><span class="hljs-string">"my_password"</span></span>,
+  "<span class="hljs-attribute">timeout</span>":<span class="hljs-value"><span class="hljs-number">300</span></span>,
+  "<span class="hljs-attribute">method</span>":<span class="hljs-value"><span class="hljs-string">"aes-256-cfb"</span>
+</span>}</code></pre>
+    <p>
+     设置系统代理或者浏览器代理。
+     <br/>
+     <code>
+      Chrome
+     </code>
+     推荐
+     <code>
+      SwitchyOmega
+     </code>
+     插件
+     <br/>
+     启动
+     <code>
+      shadowsocks
+     </code>
+    </p>
+    <pre class="prettyprint"><code class=" hljs vbnet">sslocal -c /etc/shadowsocks.json -d start/<span class="hljs-keyword">stop</span>/restart/<span class="hljs-keyword">stop</span></code></pre>
+    <p>
+     编写systemd来设置开机自启
+     <code>
+      vim /etc/systemd/system/shadowsocks.service
+     </code>
+     <br/>
+     <strong>
+      <em>
+       安装shadowsocks-qt5图形化界面客户端
+      </em>
+     </strong>
+     <br/>
+     对于ubuntu来说安装过程相对容易，网上有很多需要添加ppa然后使用apt的安装方法这样是不对的，建议去shadowsocks的git上翻看安装说明。
+     <br/>
+     <a href="https://github.com/shadowsocks/shadowsocks-qt5/wiki/%E5%AE%89%E8%A3%85%E6%8C%87%E5%8D%97">
+      链接
+     </a>
+     <br/>
+     只需要下载一个AppImage文件文件，添加可执行权限运行即可了。
+    </p>
+    <pre class="prettyprint"><code class=" hljs ini"><span class="hljs-title">[Unit]</span>
+<span class="hljs-setting">Description=<span class="hljs-value">Shadowsocks Client Service</span></span>
+<span class="hljs-setting">After=<span class="hljs-value">network.target</span></span>
+
+<span class="hljs-title">[Service]</span>
+<span class="hljs-setting">Type=<span class="hljs-value">simple</span></span>
+<span class="hljs-setting">User=<span class="hljs-value">root</span></span>
+<span class="hljs-setting">ExecStart=<span class="hljs-value">/usr/bin/sslocal -c /home/xx/Software/ShadowsocksConfig/shadowsocks.json</span></span>
+
+<span class="hljs-title">[Install]</span>
+<span class="hljs-setting">WantedBy=<span class="hljs-value">multi-user.target</span></span></code></pre>
+    <p>
+     使配置生效
+    </p>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">systemctl enable /etc/systemd/<span class="hljs-keyword">system</span>/shadowsocks.service</code></pre>
+    <p>
+     使用ssloca命令启动shadow服务时报错。这是因为crypto1.1废弃了1.0中的一个函数，只需要将其找到并做替换即可
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso">vim /usr/<span class="hljs-built_in">local</span>/lib/python2<span class="hljs-number">.7</span>/dist<span class="hljs-attribute">-packages</span>/shadowsocks/crypto/openssl<span class="hljs-built_in">.</span>py</code></pre>
+    <p>
+     将
+     <code>
+      cleanup
+     </code>
+     替换为
+     <code>
+      reset
+     </code>
+     <br/>
+     重启服务即可
+    </p>
+    <h6 id="2安装pycharm">
+     2.安装Pycharm
+    </h6>
+    <p>
+     在官网下载
+     <br/>
+     解压自目录下，进入pycharm*/bin/中
+     <br/>
+     hosts文件再/etc/hosts
+     <br/>
+     运行pycharm(关于破解请看
+     <a href="http://idea.lanyus.com/">
+      网站
+     </a>
+     )
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">sh pycharm<span class="hljs-preprocessor">.sh</span></code></pre>
+    <p>
+     设置桌面快捷方式：
+     <a href="https://blog.csdn.net/tmosk/article/details/72852330">
+      参考
+     </a>
+     <br/>
+     编辑
+     <code>
+      gedit /usr/share/applications/Pycharm.desktop
+     </code>
+    </p>
+    <pre class="prettyprint"><code class=" hljs ini"><span class="hljs-title">[Desktop Entry]</span>  
+<span class="hljs-setting">Type=<span class="hljs-value">Application  </span></span>
+<span class="hljs-setting">Name=<span class="hljs-value">Pycharm  </span></span>
+<span class="hljs-setting">GenericName=<span class="hljs-value">Pycharm3  </span></span>
+<span class="hljs-setting">Comment=<span class="hljs-value">Pycharm3:The Python IDE  </span></span>
+<span class="hljs-setting">Exec=<span class="hljs-value"><span class="hljs-string">"/XXX/pycharm-community-3.4.1/bin/pycharm.sh"</span> %f  </span></span>
+<span class="hljs-setting">Icon=<span class="hljs-value">/XXX/pycharm-community-<span class="hljs-number">3.4</span>.<span class="hljs-number">1</span>/bin/pycharm.png  </span></span>
+<span class="hljs-setting">Terminal=<span class="hljs-value">pycharm  </span></span>
+<span class="hljs-setting">Categories=<span class="hljs-value">Pycharm;  </span></span></code></pre>
+    <p>
+     保存，这时可以再所有应用中看到pycharm的图标
+    </p>
+    <h6 id="3安装搜狗输入法-for-linux">
+     3.安装搜狗输入法 for linux
+    </h6>
+    <p>
+     官网下载即可…双击下载之后的deb文件
+    </p>
+    <h6 id="4安装网易云音乐">
+     4.安装网易云音乐
+    </h6>
+    <p>
+     同样官网下载linux的deb文件，双击安装。
+    </p>
+    <h5 id="5安装chrome-gnome-shell进行美化">
+     5.安装chrome-gnome-shell进行美化
+    </h5>
+    <p>
+     <a href="https://www.linuxidc.com/Linux/2018-05/152379.htm">
+      参考
+     </a>
+    </p>
+    <h4 id="6安装docky-仿mac-ox">
+     6.安装docky 仿mac ox
+    </h4>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     好困，睡了！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80575668
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7712972" target="_blank">
+    ubuntu
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

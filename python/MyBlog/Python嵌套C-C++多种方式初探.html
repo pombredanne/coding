@@ -1,0 +1,331 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   Python嵌套C/C++多种方式初探
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年02月16日 11:20:44
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：139
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     python一向以简洁，易上手闻名，但是正是由于它的开放性，导致很难对我们的代码做一些保护措施，哪怕是做了混淆，反编译起来仍然易如反掌。
+     <br/>
+     由于某种需要，我需要对python进行更好的保护，避免源码的泄露，增大反编译的难度，因此我特地探究了一下python嵌套C/C++的多种实现方式，同时参考了很多文章，接下来我会选几种方法进行尝试。
+    </p>
+    <h2 id="一python-cc-api">
+     一、python C/C++ API
+    </h2>
+    <p>
+     这是一种官方给的方法，但这也是最麻烦的一种方法，不过既然是官方的，原生的，那么肯定有其优点。
+     <br/>
+     <a href="https://docs.python.org/2/c-api/intro.html#include-files" rel="nofollow" target="_blank">
+      官方文档
+     </a>
+     <br/>
+     <strong>
+      <em>
+       先来简单看一下过程
+      </em>
+     </strong>
+    </p>
+    <pre class="prettyprint"><code class=" hljs ruleslanguage"><span class="hljs-array">#include </span><span class="hljs-string">"Python.h"</span></code></pre>
+    <p>
+     首先你必须在你的C文件中包含这个库，并且放在所有库的上面
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">This implies inclusion of the following standard headers: &lt;stdio<span class="hljs-preprocessor">.h</span>&gt;, &lt;string<span class="hljs-preprocessor">.h</span>&gt;, &lt;errno<span class="hljs-preprocessor">.h</span>&gt;, &lt;limits<span class="hljs-preprocessor">.h</span>&gt;, &lt;assert<span class="hljs-preprocessor">.h</span>&gt; <span class="hljs-keyword">and</span> &lt;stdlib<span class="hljs-preprocessor">.h</span>&gt; (if available).</code></pre>
+    <p>
+     通常来说
+     <code>
+      &lt;Python.h&gt;
+     </code>
+     这个库包含了很多其它库文件。
+     <br/>
+     python中的对象在C中都是用
+     <code>
+      PyObject
+     </code>
+     表示的。
+    </p>
+    <pre class="prettyprint"><code class=" hljs objectivec"><span class="hljs-preprocessor">#include&lt;Python.h&gt;</span>
+<span class="hljs-keyword">static</span> PyObject* add(PyObject* <span class="hljs-keyword">self</span>,PyObject* arges){
+  <span class="hljs-keyword">int</span> a=<span class="hljs-number">0</span>;
+  <span class="hljs-keyword">int</span> b=<span class="hljs-number">1</span>;
+  <span class="hljs-keyword">if</span>(!PyArg_ParseTuple(arges,<span class="hljs-string">"i|i"</span>,&amp;a,&amp;b)){
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;
+  }
+  <span class="hljs-keyword">return</span> Py_BuildValue(<span class="hljs-string">"i"</span>,a+b);
+}
+<span class="hljs-keyword">static</span> PyMethodDef addMethods[]={
+  {<span class="hljs-string">"add"</span>,add,METH_VARARGS},
+  {<span class="hljs-literal">NULL</span>,<span class="hljs-literal">NULL</span>,<span class="hljs-number">0</span>,<span class="hljs-literal">NULL</span>}
+};
+<span class="hljs-keyword">void</span> initmytest(){
+  Py_InitModule(<span class="hljs-string">"mytest"</span>,addMethods);
+}</code></pre>
+    <p>
+     这个不是重点，所以我将代码解释稍微解释下。
+    </p>
+    <pre class="prettyprint"><code class=" hljs oxygene"><span class="hljs-keyword">static</span> PyObject* <span class="hljs-keyword">add</span>(PyObject* <span class="hljs-keyword">self</span>,PyObject* arges)</code></pre>
+    <p>
+     类似于命令行传参的写法，其实就是一样的。
+    </p>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">PyArg_ParseTuple(arges,<span class="hljs-string">"i|i"</span>,&amp;<span class="hljs-operator">a</span>,&amp;b)</code></pre>
+    <p>
+     通过这个函数进行赋值，其中”i|i”是格式化参数。
+    </p>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">Py_BuildValue(<span class="hljs-string">"i"</span>,<span class="hljs-operator">a</span>+b)</code></pre>
+    <p>
+     指定返回类型，这里可不能写成
+     <code>
+      return a
+     </code>
+     ,对于python来说是无法接受这种类型。”i”同样是格式化参数。
+    </p>
+    <pre class="prettyprint"><code class=" hljs objectivec"><span class="hljs-keyword">static</span> PyMethodDef addMethods[]={
+  {<span class="hljs-string">"add"</span>,add,METH_VARARGS},
+  {<span class="hljs-literal">NULL</span>,<span class="hljs-literal">NULL</span>,<span class="hljs-number">0</span>,<span class="hljs-literal">NULL</span>}
+};
+<span class="hljs-keyword">void</span> initmytest(){
+  Py_InitModule(<span class="hljs-string">"mytest"</span>,addMethods);
+}</code></pre>
+    <p>
+     其中
+     <code>
+      PyMethodDef
+     </code>
+     用来设置方法列表，
+     <code>
+      initmytest
+     </code>
+     用来初始化方法，命名方式为
+     <code>
+      init+模块名称
+     </code>
+     ，
+     <code>
+      Py_InitModule
+     </code>
+     用来初始化模块。
+     <br/>
+     接下来编译生成动态库，之后便能在python中使用import进行导入了。
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso">gcc mytest<span class="hljs-built_in">.</span>c <span class="hljs-attribute">-shared</span> <span class="hljs-attribute">-lpython2</span><span class="hljs-number">.7</span> <span class="hljs-attribute">-L</span> /usr/lib/python2<span class="hljs-number">.7</span><span class="hljs-subst">/</span> <span class="hljs-attribute">-I</span> /usr/include/python2<span class="hljs-number">.7</span><span class="hljs-subst">/</span> <span class="hljs-attribute">-o</span> mytest<span class="hljs-built_in">.</span>so</code></pre>
+    <p>
+     python：
+    </p>
+    <pre class="prettyprint"><code class=" hljs oxygene">import mytest
+print mytest.<span class="hljs-keyword">add</span>(<span class="hljs-number">1</span>,<span class="hljs-number">2</span>)   <span class="hljs-string">#3</span>
+print <span class="hljs-keyword">type</span>(mytest.<span class="hljs-keyword">add</span>(<span class="hljs-number">1</span>,<span class="hljs-number">2</span>)) #&lt;<span class="hljs-keyword">type</span> <span class="hljs-string">'int'</span>&gt;</code></pre>
+    <p>
+     <strong>
+      <em>
+       ok！这种方法就介绍到这，我更推荐使用第二种方法
+      </em>
+     </strong>
+    </p>
+    <h2 id="二ctypes模块">
+     二、ctypes模块
+    </h2>
+    <p>
+     这是python自带的一个模块可以将c转化成python支持的
+     <br/>
+     <a href="https://docs.python.org/2/library/ctypes.html#ctypes-tutorial" rel="nofollow" target="_blank">
+      官方文档
+     </a>
+    </p>
+    <pre class="prettyprint"><code class=" hljs vhdl">ctypes <span class="hljs-keyword">is</span> a foreign <span class="hljs-keyword">function</span> <span class="hljs-keyword">library</span> <span class="hljs-keyword">for</span> Python. It provides C compatible data types, <span class="hljs-keyword">and</span> allows calling functions <span class="hljs-keyword">in</span> DLLs <span class="hljs-keyword">or</span> <span class="hljs-keyword">shared</span> libraries. It can be used <span class="hljs-keyword">to</span> wrap these libraries <span class="hljs-keyword">in</span> <span class="hljs-keyword">pure</span> Python.</code></pre>
+    <pre class="prettyprint"><code class=" hljs vhdl">Note: Some code samples reference the ctypes c_int <span class="hljs-keyword">type</span>. This <span class="hljs-keyword">type</span> <span class="hljs-keyword">is</span> an <span class="hljs-keyword">alias</span> <span class="hljs-keyword">for</span> the c_long <span class="hljs-keyword">type</span> <span class="hljs-keyword">on</span> <span class="hljs-number">32</span>-<span class="hljs-typename">bit</span> systems. So, you should <span class="hljs-keyword">not</span> be confused <span class="hljs-keyword">if</span> c_long <span class="hljs-keyword">is</span> printed <span class="hljs-keyword">if</span> you would expect c_int — they are actually the same <span class="hljs-keyword">type</span>.</code></pre>
+    <p>
+     意思是说
+     <code>
+      c_long
+     </code>
+     和
+     <code>
+      c_int
+     </code>
+     是同一种类型，不要大惊小怪的。
+     <br/>
+     由于windows上会遇到比较多的问题，因此我就在linux下做了。
+    </p>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">On Linux, <span class="hljs-keyword">it</span> is required <span class="hljs-built_in">to</span> specify <span class="hljs-operator">the</span> filename including <span class="hljs-operator">the</span> extension <span class="hljs-built_in">to</span> <span class="hljs-built_in">load</span> <span class="hljs-operator">a</span> library, so attribute access can <span class="hljs-operator">not</span> be used <span class="hljs-built_in">to</span> <span class="hljs-built_in">load</span> libraries. Either <span class="hljs-operator">the</span> LoadLibrary() method <span class="hljs-operator">of</span> <span class="hljs-operator">the</span> dll loaders should be used, <span class="hljs-operator">or</span> you should <span class="hljs-built_in">load</span> <span class="hljs-operator">the</span> library <span class="hljs-keyword">by</span> creating <span class="hljs-operator">an</span> instance <span class="hljs-operator">of</span> CDLL <span class="hljs-keyword">by</span> calling <span class="hljs-operator">the</span> constructor:</code></pre>
+    <p>
+     就是说你可以使用LoadLibrary()这个方法加载一个动态链接库，或者说创建一个CDLL类型的实例。
+     <br/>
+     代码如下：
+    </p>
+    <pre class="prettyprint"><code class=" hljs r">&gt;&gt;&gt; cdll.LoadLibrary(<span class="hljs-string">"libc.so.6"</span>)  
+&lt;CDLL <span class="hljs-string">'libc.so.6'</span>, handle <span class="hljs-keyword">...</span> at <span class="hljs-keyword">...</span>&gt;
+&gt;&gt;&gt; libc = CDLL(<span class="hljs-string">"libc.so.6"</span>)       
+&gt;&gt;&gt; libc                           
+&lt;CDLL <span class="hljs-string">'libc.so.6'</span>, handle <span class="hljs-keyword">...</span> at <span class="hljs-keyword">...</span>&gt;
+&gt;&gt;&gt;</code></pre>
+    <p>
+     <strong>
+      <em>
+       ctypes、C、python类型对照表：
+      </em>
+     </strong>
+     <br/>
+     <img alt="" src="https://img-blog.csdn.net/20180215235009743?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     需要值得注意的是，有些类型是可以改变的，但是有些类型是无法改变的，如C语言的指针类型，在C中是可以通过指针来修改，但在python中string类型是无法修改的。
+    </p>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">Assigning <span class="hljs-operator">a</span> <span class="hljs-built_in">new</span> <span class="hljs-built_in">value</span> <span class="hljs-built_in">to</span> instances <span class="hljs-operator">of</span> <span class="hljs-operator">the</span> pointer types c_char_p, c_wchar_p, <span class="hljs-operator">and</span> c_void_p changes <span class="hljs-operator">the</span> memory location they point <span class="hljs-built_in">to</span>, <span class="hljs-operator">not</span> <span class="hljs-operator">the</span> contents <span class="hljs-operator">of</span> <span class="hljs-operator">the</span> memory block (<span class="hljs-operator">of</span> course <span class="hljs-operator">not</span>, because Python strings are immutable):</code></pre>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-prompt">&gt;&gt;&gt; </span>s=<span class="hljs-string">"hello"</span>
+<span class="hljs-prompt">&gt;&gt;&gt; </span>c_s=c_char_p(s) <span class="hljs-comment">#虽然c_char_P代表C中的指针类型，但却无法起到指针的作用</span>
+<span class="hljs-prompt">&gt;&gt;&gt; </span><span class="hljs-keyword">print</span> c_s
+c_char_p(<span class="hljs-number">140564006618180</span>)
+<span class="hljs-prompt">&gt;&gt;&gt; </span><span class="hljs-keyword">print</span> c_s.value
+hello
+<span class="hljs-prompt">&gt;&gt;&gt; </span>c_s.value=<span class="hljs-string">"Hi"</span>  <span class="hljs-comment">#尝试通过c_s对s进行修改</span>
+<span class="hljs-prompt">&gt;&gt;&gt; </span><span class="hljs-keyword">print</span> c_s.value 
+Hi
+<span class="hljs-prompt">&gt;&gt;&gt; </span><span class="hljs-keyword">print</span> s  
+hello</code></pre>
+    <p>
+     ctypes模块其实也提供了对内存块进行修改的方法，这里我就不多提了。
+     <br/>
+     <strong>
+      <em>
+       接下来就来实践一下
+      </em>
+     </strong>
+     <br/>
+     首先编写一个简单的C程序，编译生成共享库文件
+     <code>
+      m.so
+     </code>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180216004826466?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso">g<span class="hljs-subst">++</span> <span class="hljs-attribute">-o</span> m<span class="hljs-built_in">.</span>so <span class="hljs-attribute">-shared</span> <span class="hljs-attribute">-fPIC</span> m<span class="hljs-built_in">.</span>c</code></pre>
+    <p>
+     一定要用g++哦，gcc不行的。因为gcc是无法识别extern “C”语法的
+     <br/>
+     shared是共享库文件，fPIC是独立编译
+     <br/>
+     <strong>
+      <em>
+       m.py:
+      </em>
+     </strong>
+    </p>
+    <pre class="prettyprint"><code class=" hljs vbnet"><span class="hljs-keyword">from</span> ctypes import *
+<span class="hljs-keyword">lib</span>=cdll.LoadLibrary(<span class="hljs-string">"./m.so"</span>)<span class="hljs-preprocessor">#lib=CDLL("./m.so")</span>
+<span class="hljs-keyword">lib</span>.cfoo2(<span class="hljs-number">1</span>,<span class="hljs-number">3</span>)</code></pre>
+    <p>
+     最后运行py脚本即可。
+     <br/>
+     基本的过程就是这样。再来写一个返回指针类型的例子。
+    </p>
+    <pre class="prettyprint"><code class=" hljs cpp"><span class="hljs-keyword">char</span> *cfoo5(<span class="hljs-keyword">char</span> *s){
+  <span class="hljs-keyword">char</span> c[]=<span class="hljs-string">"this is the test"</span>;
+  <span class="hljs-built_in">strcpy</span>(s,c);
+  <span class="hljs-keyword">return</span> s;
+ }</code></pre>
+    <pre class="prettyprint"><code class=" hljs php">change=c_char_p(lib.cfoo5(<span class="hljs-string">"what"</span>))
+<span class="hljs-keyword">print</span> change
+<span class="hljs-keyword">print</span> change.value  <span class="hljs-comment">#c_char_p(1298908132)</span></code></pre>
+    <p>
+     这并没有达到我的预期，正常来说应该可以正确返回的。尝试了很多写法，都没有成功，最终还是在官网上找到了答案。
+    </p>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">By default functions are assumed <span class="hljs-built_in">to</span> <span class="hljs-constant">return</span> <span class="hljs-operator">the</span> C int type. Other <span class="hljs-constant">return</span> types can be specified <span class="hljs-keyword">by</span> setting <span class="hljs-operator">the</span> <span class="hljs-string">'restype'</span> attribute <span class="hljs-operator">of</span> <span class="hljs-operator">the</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">object</span>.</span></code></pre>
+    <p>
+     嵌套函数默认的返回类型是C语言中的int类型，如果需要返回其它类型的值，使用
+     <code>
+      restype
+     </code>
+     属性进行设置。
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">lib=cdll<span class="hljs-preprocessor">.LoadLibrary</span>(<span class="hljs-string">"./m.so"</span>)
+lib<span class="hljs-preprocessor">.cfoo</span>5<span class="hljs-preprocessor">.restype</span>=c_char_p
+change=lib<span class="hljs-preprocessor">.cfoo</span>5(<span class="hljs-string">"this is"</span>)
+print change  <span class="hljs-preprocessor">#this is the test</span>
+print type(change)  <span class="hljs-preprocessor">#&lt;type 'str'&gt;</span></code></pre>
+    <p>
+     这里还有另一种写法：
+    </p>
+    <pre class="prettyprint"><code class=" hljs fsharp"><span class="hljs-keyword">fun</span>=cdll.LoadLibrary(<span class="hljs-string">"./m.so"</span>).cfoo5
+<span class="hljs-keyword">fun</span>.restype=c_char_p
+change=<span class="hljs-keyword">fun</span>(<span class="hljs-string">"this is"</span>)
+print change
+print <span class="hljs-class"><span class="hljs-keyword">type</span>(</span>change)</code></pre>
+    <p>
+     你还可以用
+     <code>
+      argtypes
+     </code>
+     属性来设置传入参数，避免出现溢出之类的错误，因为即使参数传入出错了，python也不会报错的。
+    </p>
+    <pre class="prettyprint"><code class=" hljs fix"><span class="hljs-attribute">strchr.argtypes </span>=<span class="hljs-string"> [c_char_p, c_char]</span></code></pre>
+    <p>
+     还有其它一些高级的用法，这里就不过多讲了。
+    </p>
+    <p>
+     这时候我们再来做混淆，最后编译成pyc，打包发给用户就好了。
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     python嵌套C的方法有很多，大家也可以尝试一些其它的工具。
+     <br/>
+     下面推荐一篇别人写的文章，介绍了很多方式。
+     <a href="http://www.isnowfy.com/introduction-to-python-c-extension/#swig" rel="nofollow">
+      其它方法简介
+     </a>
+     <br/>
+     总之适合自己的才是最好的。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79329917
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=python&amp;t=blog" target="_blank">
+    python
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7452180" target="_blank">
+    python
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

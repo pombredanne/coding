@@ -1,0 +1,155 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   kali设置bash开机自启动
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年03月23日 18:54:06
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：131
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     首先说一下需求。由于kali2.0的共享文件需要执行挂载文件夹，导致每次开机时都需要手动运行一个命令才可以将共享文件夹成功挂载。
+     <br/>
+     本文的目的是为了解决开机时自动挂载共享文件夹。
+     <br/>
+     <a href="https://blog.csdn.net/ncafei/article/details/70800146" rel="nofollow">
+      参考文章1
+     </a>
+     <br/>
+     <a href="https://blog.csdn.net/zhengshifeng123/article/details/52708596" rel="nofollow">
+      参考文章2
+     </a>
+    </p>
+    <h3 id="关于linux的启动">
+     关于linux的启动
+    </h3>
+    <p>
+     init是所有进程的顶层，所有的启动脚本放置在/etc/rc.d/init.d/中
+     <br/>
+     rc?.d 中放置的是 init.d 中脚本的链接,命名格式是:
+     <br/>
+     S{number}{name}
+     <br/>
+     K{number}{name}
+     <br/>
+     S 开始的文件向脚本传递 start 参数
+     <br/>
+     K 开始的文件向脚本传递 stop 参数
+     <br/>
+     number 决定执行的顺序
+    </p>
+    <h3 id="脚本">
+     脚本
+    </h3>
+    <p>
+     在/etc/init.d/目录下编写脚本 名字任意 我这里命名为
+     <code>
+      mount
+     </code>
+    </p>
+    <pre class="prettyprint"><code class=" hljs bash">这是bash脚本的头 必须要添加 应该是为了设置defaults的值 否则不成功
+<span class="hljs-shebang">#! /bin/sh</span>
+<span class="hljs-comment">### BEGIN INIT INFO</span>
+<span class="hljs-comment"># Provides: OnceDoc</span>
+<span class="hljs-comment"># Required-Start: $network $remote_fs $local_fs</span>
+<span class="hljs-comment"># Required-Stop: $network $remote_fs $local_fs</span>
+<span class="hljs-comment"># Default-Start: 2 3 4 5</span>
+<span class="hljs-comment"># Default-Stop: 0 1 6</span>
+<span class="hljs-comment"># Short-Description: start and stop node</span>
+<span class="hljs-comment"># Description: OnceDoc</span>
+<span class="hljs-comment">### END INIT INFO</span>
+vmware-hgfsclient | <span class="hljs-keyword">while</span> <span class="hljs-built_in">read</span> folder; <span class="hljs-keyword">do</span>
+  vmwpath=<span class="hljs-string">"/mnt/hgfs/<span class="hljs-variable">${folder}</span>"</span>
+  <span class="hljs-built_in">echo</span> <span class="hljs-string">"[i] Mounting <span class="hljs-variable">${folder}</span>   (<span class="hljs-variable">${vmwpath}</span>)"</span>
+  mkdir -p <span class="hljs-string">"<span class="hljs-variable">${vmwpath}</span>"</span>
+  umount <span class="hljs-operator">-f</span> <span class="hljs-string">"<span class="hljs-variable">${vmwpath}</span>"</span> <span class="hljs-number">2</span>&gt;/dev/null
+  vmhgfs-fuse -o allow_other -o auto_unmount <span class="hljs-string">".host:/<span class="hljs-variable">${folder}</span>"</span> <span class="hljs-string">"<span class="hljs-variable">${vmwpath}</span>"</span>
+<span class="hljs-keyword">done</span>
+sleep <span class="hljs-number">2</span>s
+</code></pre>
+    <p>
+     这个是挂载共享文件夹的脚本
+    </p>
+    <h3 id="添加进开机自启项">
+     添加进开机自启项
+    </h3>
+    <p>
+     <code>
+      update-rc.d xxx defaults 99
+     </code>
+     (这里的99是启动顺序，在某些情况下后又先后顺序的要求，这里不需要)
+     <br/>
+     重启即可，发现已经自动挂载了。
+     <br/>
+     可以通过
+     <br/>
+     <code>
+      cat /etc/rc*.d
+     </code>
+     进行察看是否将对应的脚本
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180323190821598?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+    </p>
+    <h3 id="移除开机启动项">
+     移除开机启动项
+    </h3>
+    <pre class="prettyprint"><code class=" hljs lasso">update<span class="hljs-attribute">-rc</span><span class="hljs-built_in">.</span>d <span class="hljs-attribute">-f</span> xxx remove</code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     说实话我真的是折腾了很久，无语了，网上虽然有很多文章，但是都不全。尤其是bash脚本的编写。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79671403
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=bash&amp;t=blog" target="_blank">
+    bash
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=linux&amp;t=blog" target="_blank">
+    linux
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6925811" target="_blank">
+    kali linux
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

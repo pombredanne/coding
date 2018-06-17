@@ -1,0 +1,123 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   CTF数组越界漏洞内存布局简析
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2017年06月03日 13:37:02
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：642
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     今天为大家带来一篇关于数组越界漏洞原理的分析，并且结合CTF中的实例给大家讲解下。由于自己也是第一次接触，如若有不到位的地方，还希望各位评论补充我会及时的改正。
+    </p>
+    <p>
+     总体来说数组越界其实和栈溢出差不多。。。
+     <br/>
+     推荐一篇文章
+    </p>
+    <blockquote>
+     <p>
+      <a href="http://blog.csdn.net/human_evolution/article/details/40752047" rel="nofollow">
+       http://blog.csdn.net/human_evolution/article/details/40752047
+      </a>
+     </p>
+    </blockquote>
+    <p>
+     基本上把数组越界的原理给讲清楚了。在这里呢，我主要是结合CTF中的题，让大家实际的感受一把如何利用这个漏洞。
+    </p>
+    <p>
+     上题咯！(有时候我在想要不要把题目的链接也发出来让大家可以一起练习呢？需要题目的留言一下哦~)
+    </p>
+    <p>
+     习惯性的检查开了哪些保护。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170603133259423?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     开了NX，没开栈保护，可以往栈溢出这方面着手。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170603133324408?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     随便运行了下，好像是个数组(array).
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170603133341158?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     感觉程序逻辑还挺绕，不过这都不用管，主要是这:s[v3] = v2,问题都出在，程序员永远都不要相信别人的输入，这是程序员很容易犯的一个错误。
+     <br/>
+     我这里主要是想和大家一起学习下程序是如何给数组分配内存的，以及数组各元素所处的相对位置。下个断点咱们来调试一下。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170603133357224?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     这个解释起来，代码，堆栈，寄存器都得看，截图比较麻烦。汗！注意下这都是16进制的，别理解出错了。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170603133411427?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     执行这条语句之后，进行赋值。其中[ebp+s]所指向的是数组的起始位置，eax是我们的偏移量，也就是下标值，在栈中就是这样的布局。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170603133421865?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     了解了这些之后我想如何利用这个漏洞应该就是小case了，我们已经实现任意写。
+     <br/>
+     这道t题呢，也不需要我们去leak什么地址，
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170603133445394?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     System函数都已经这么明显的摆在这了，我们要做的就是将栈给布置好，给system的执行有一个舒适的环境。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170603133527895?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     最后的exp我就不贴了，主要是分析一下思路。大家自己去写写咯！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/72851639
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=漏洞&amp;t=blog" target="_blank">
+    漏洞
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=栈&amp;t=blog" target="_blank">
+    栈
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6925810" target="_blank">
+    PWN
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

@@ -1,0 +1,92 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   base64算法特征| 自定义密码表
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年04月22日 13:07:39
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：24
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     最近遇到了base64解密的问题，而且需要自定义密码表，于是仔细了解了一下base64的加解密的过程
+    </p>
+    <h3 id="介绍">
+     介绍
+    </h3>
+    <p>
+     其实base64是一种很简单的编码方式。
+     <br/>
+     将3个8字节的二进制，转化为4个6字节的二进制。同时因为2^6=64所以将转化之后的值匹配对应长度为64的密码表，最终得到密文。
+     <br/>
+     解密过程就是，先在密码表中找到对应的下标，然后组合，每8位为一个字符。
+    </p>
+    <h3 id="特征">
+     特征
+    </h3>
+    <p>
+     参考源码
+     <a href="https://github.com/joedf/base64.c" rel="nofollow">
+      https://github.com/joedf/base64.c
+     </a>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/2018042212583176?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     base64算法通常会在IDA看到一组64位的数据块
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180422130004878?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     有了源码，那么自定义密码表，只需要略作修改即可。
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80038121
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=base64&amp;t=blog" target="_blank">
+    base64
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7599290" target="_blank">
+    Re
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

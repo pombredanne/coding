@@ -1,0 +1,182 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   apk常见工具使用【不定期更新】
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年02月27日 22:54:05
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：39
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     突发奇想，想写一遍工具的使用文章。会不定期更新。
+     <br/>
+     <strong>
+      <em>
+       导航
+      </em>
+     </strong>
+     <br/>
+     1.
+     <a href="#1" rel="nofollow">
+      jarsigner
+     </a>
+     <br/>
+     2.
+     <a href="#2" rel="nofollow">
+      java*
+     </a>
+     <br/>
+     3.
+     <a href="#3" rel="nofollow">
+      adb
+     </a>
+    </p>
+    <h3 id="title">
+    </h3>
+    <h2 id="1">
+     jarsigner签名
+    </h2>
+    <p>
+     首先使用
+     <code>
+      jarsigner -help
+     </code>
+     查看参数列表，这个工具是jdk中自带的。
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso">jarsigner <span class="hljs-attribute">-verbose</span> <span class="hljs-attribute">-keystore</span> my_test_sign<span class="hljs-built_in">.</span>store <span class="hljs-attribute">-signedjar</span> out<span class="hljs-built_in">.</span>apk input<span class="hljs-built_in">.</span>apk key0 <span class="hljs-attribute">-storepass</span> <span class="hljs-number">123456</span> <span class="hljs-attribute">-digestalg</span> SHA1 <span class="hljs-attribute">-sigfile</span> CERT <span class="hljs-attribute">-sigalg</span> MD5withRSA</code></pre>
+    <p>
+     <code>
+      -keystore
+     </code>
+     是我的签名文件，可以使用as创建，out.apk为签名后的文件，input.apk为未签名的文件， key0为别名,
+     <code>
+      -storepass
+     </code>
+     签名文件的密码，
+     <code>
+      -digestalg SHA1
+     </code>
+     摘要算法，如果不加会出现问题(不知道为什么)
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">jarsigner -verbose –verify <span class="hljs-keyword">out</span><span class="hljs-preprocessor">.apk</span></code></pre>
+    <p>
+     验证签名后的apk文件
+    </p>
+    <h3 id="title-1">
+    </h3>
+    <h2 id="2">
+     java*
+    </h2>
+    <pre class="prettyprint"><code class=" hljs bash">javap <span class="hljs-operator">-s</span> -p *.class   <span class="hljs-comment">#查看对应class的tag，在NDK开发中常用</span></code></pre>
+    <h3 id="title-2">
+    </h3>
+    <h2 id="3">
+     adb
+    </h2>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">    <span class="hljs-number">1.</span> adb ？
+    <span class="hljs-number">2.</span> adb install -r *.apk   <span class="hljs-comment">#替换原有的app</span>
+    <span class="hljs-number">3.</span> adb devices   <span class="hljs-comment">#显示连接设备</span>
+    <span class="hljs-number">4.</span> adb jdwp <span class="hljs-comment">#查看设备中可以被调试的应用的进程号</span>
+    <span class="hljs-number">5.</span> adb logcat <span class="hljs-comment">#查看日志文件</span>
+    <span class="hljs-number">6.</span> adb uninstall *.apk   -k   <span class="hljs-comment">#保留数据</span>
+    <span class="hljs-number">7.</span> adb connect <span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.0</span> ：port
+    <span class="hljs-number">8.</span> adb forward tcp:<span class="hljs-number">23946</span> tcp:<span class="hljs-number">23946</span>
+    <span class="hljs-number">9.</span> adb <span class="hljs-built_in">version</span>
+    <span class="hljs-number">10.</span> adb <span class="hljs-built_in">shell</span> am start -n 包名/包名 类名
+    <span class="hljs-number">11.</span> adb <span class="hljs-built_in">shell</span> am force-stop 包名/包名 类名
+    <span class="hljs-number">12.</span> adb <span class="hljs-built_in">shell</span> pm <span class="hljs-built_in">clear</span> 包名/包名 类名   <span class="hljs-comment">#停止运行，并清除相关数据</span>
+    <span class="hljs-number">13.</span> adb <span class="hljs-built_in">shell</span> ps | grep 。。。
+    <span class="hljs-number">14.</span> adb <span class="hljs-built_in">shell</span> dumpsys activity top  <span class="hljs-comment">#查看当前的活动</span>
+    <span class="hljs-number">15.</span> adb <span class="hljs-built_in">shell</span> dumpsys package  <span class="hljs-comment">#查看指定包名应用的详细信息</span>
+    <span class="hljs-number">16.</span> adb <span class="hljs-built_in">shell</span> screencap -p <span class="hljs-comment">#路径    截图</span>
+    <span class="hljs-number">17.</span> adb <span class="hljs-built_in">shell</span> screenrecord  <span class="hljs-comment">#路径   录屏</span>
+    <span class="hljs-number">18.</span> adb <span class="hljs-built_in">shell</span> input <span class="hljs-keyword">text</span>  <span class="hljs-comment">#输入文本内容</span>
+    <span class="hljs-number">19.</span> adb logcat -s tag    <span class="hljs-comment">#获取指定tag的日志</span>
+    <span class="hljs-number">20.</span> pm <span class="hljs-built_in">clear</span> 包名  清空应用数据
+    <span class="hljs-number">22.</span> am broadcast -<span class="hljs-operator">a</span> 发送一个广播
+    <span class="hljs-number">23.</span> netcfg  查看设备的ip地址
+    <span class="hljs-number">24.</span> netstat 查看设备的端口号信息
+    <span class="hljs-number">25.</span> cat /proc/[pid]/maps  查看进程的内存映射信息  如加载了哪些so文件 dex文件
+    <span class="hljs-number">26.</span> cat /proc/[pid]/status  查看进程的状态信息
+    <span class="hljs-number">27.</span> cat /proc/[pid]/net/{tcp/tcp6/udp/udp6} 
+    <span class="hljs-number">28.</span> adb <span class="hljs-built_in">shell</span> pm list packages   列出所有已安装的包名
+    <span class="hljs-number">29.</span> adb <span class="hljs-built_in">shell</span> pm path 包名   找到相应包名的位置
+    <span class="hljs-number">30.</span> adb pull &lt;path&gt; 本地路径
+
+
+
+</code></pre>
+    <p>
+     <strong>
+      <em>
+       4.12更新
+      </em>
+     </strong>
+     <br/>
+     新版
+     <code>
+      baksmali
+     </code>
+     和
+     <code>
+      smali
+     </code>
+     的使用
+     <br/>
+     反编译dex
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">java -jar baksmali-<span class="hljs-number">2.2</span><span class="hljs-number">.1</span><span class="hljs-preprocessor">.jar</span> d classes<span class="hljs-preprocessor">.dex</span></code></pre>
+    <p>
+     回编译smali
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">java -jar smali-<span class="hljs-number">2.2</span><span class="hljs-number">.1</span><span class="hljs-preprocessor">.jar</span> a <span class="hljs-keyword">out</span></code></pre>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79394237
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=apk&amp;t=blog" target="_blank">
+    apk
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

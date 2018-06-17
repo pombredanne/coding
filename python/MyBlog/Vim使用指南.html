@@ -1,0 +1,209 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   Vim使用指南
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年03月23日 14:59:50
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：16
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     其实我原来是资深的notepad++用户，之前也接触过vim等编辑器，也曾下决心学习过，但是由于使用的习惯问题，最终都是没有去熟练。
+     <br/>
+     这次再度学习vim的使用，也是因为由于需要常常在linux下进行文本编辑(我已经厌倦了windows下编辑，然后再到linux下执行了，这样确实比较麻烦),因此我又重新拾起vim这款编辑器。再次我也做了些笔记，特此和大家分享。
+    </p>
+    <h3 id="常用命令">
+     常用命令
+    </h3>
+    <p>
+     以下是我自己在学习的时候整理的笔记，我建议大家可以去下载一个
+     <strong>
+      <em>
+       vim命令中文手册.pdf
+      </em>
+     </strong>
+    </p>
+    <pre class="prettyprint"><code class=" hljs applescript">i 是插入
+a 是追加
+R 进入替换模式
+vim -R <span class="hljs-type">file</span> 以只读方式打开
+view <span class="hljs-type">file</span> 只读
+o 是在当前行的下一行 另起一行 并设置为insert模式
+O 实在当前行的上面 另起一行 并设置为insert模式
+x 删除单个字符
+X 删除前一个字符
+D 删除当前字符到结尾
+dd 删除一行
+dw 删除一个<span class="hljs-property">word</span>
+d4w 删除<span class="hljs-number">4</span>个<span class="hljs-property">word</span>
+dG 删除当前行至文件尾的内容
+dgg 删除当前行至文件头的内容
+
+x 代表dl(删除当前光标下的字符)
+X 代表dh(删除当前光标左边的字符)
+D 代表d$(删除到行尾的内容)
+C 代表c$(修改到行尾的内容)
+s 代表cl(修改一个字符)
+S 代表cc(修改一整行)
+
+daw 删除当前单词 aw是一个文本对象
+p 取回被删除的内容，在当前光标位置恢复 P
+xp 常用来交换两个字符
+y 复制 yy 复制整行 Y 复制整行
+使用剪切板：
+<span class="hljs-string">"*yy 将一行内容复制到剪切板
+"</span>*p 将一行内容从剪切板粘贴
+c 改变文本 同d类似 也可以接一些移位的操作符
+r 替换单个字符
+J 删除当前行的换行符
+u 撤销上次的操作
+ctrl R 用于撤销 上次撤销所做的操作
+w 向前移动一个<span class="hljs-property">word</span>
+b 向后移动一个<span class="hljs-property">word</span>
+e 向后移动并将光标位于<span class="hljs-property">word</span>的最后一个字母上
+ge 向前移动并且光标位于最后一个字母上
+^ 移动到字母开头 
+<span class="hljs-number">0</span> 移动到字符的最前面
+$ 移动到行尾
+一个命令的大写字母往往会做相同的事情但是方向相反
+gg 跳转到第一行
+numG 跳转到指定行
+% 自动跳转到匹配({[处
+M 跳转到中间位置
+H  跳转到开头
+L  跳转到末尾
+ctrl G 查看当前行的信息  
+:<span class="hljs-keyword">set</span> <span class="hljs-type">number</span> 显示行号  :<span class="hljs-keyword">set</span> nonumber 不显示行号
+:<span class="hljs-keyword">set</span> ruler 用于显示当前光标位置
+:<span class="hljs-keyword">set</span> ignorecase 忽略大小写
+:<span class="hljs-keyword">set</span> hlsearch 在匹配时显示语法高亮
+:marks 显示所有的mark标记
+:<span class="hljs-keyword">set</span> backup 备份文件
+:<span class="hljs-keyword">set</span> backupext=.bak 备份时的文件名
+zz 将当前行置于屏幕正中央
+zt 将当前行置于屏幕顶b端
+zb 将当前行置于底端
+/<span class="hljs-type">string</span> 进行字符串查找   使用n可以在不同<span class="hljs-type">string</span>间切换  N为向前
+?<span class="hljs-type">string</span> 为反向查找
+直接在<span class="hljs-property">word</span>上 使用* 则可以匹配对应的字符串 <span class="hljs-comment"># 也是类似</span>
+/ \&lt;<span class="hljs-keyword">the</span>\&gt;用来精确匹配字符串
+`` 可以在两次跳转将来回切换
+ctrl O 可以往回跳
+ctrl I 可以往前跳 Tab 命令功能相同
+:jumps 会列出历史跳转记录
+m&lt;&gt; mark一个标记  可以使用`mark 来进行跳转移动到下标记的位置  或者是 'mark 移动到行首
+ZZ  保存更改
+:q! 丢弃所有更改 并退出
+:e! 放弃所有更改，并重新载入文件进行编辑
+v 进入可视模式，这里主要进行选择操作
+:saveas move.c 将当前文件 另存为
+:w保存
+:split 分割窗口
+:close 关闭当前窗口
+:only 关闭除当前窗口外的其它窗口
+:vsplit 左右分割窗口
+:qall 关闭所有窗口
+:wall 保存所有窗口中的修改
+ctrl W 进行多个窗口间切换  由于和cmder的hotkey冲突 所以可以用ctrl shift w 进行替换 效果一样
+vimdiff file1 file2 可以查看两个文件的不同
+vim -r <span class="hljs-type">file</span> 进行交换文件恢复</code></pre>
+    <h3 id="配置">
+     配置
+    </h3>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">.vimrc
+<span class="hljs-string">"去掉vi的一致性"</span>
+<span class="hljs-built_in">set</span> nocompatible
+<span class="hljs-string">"显示行号"</span>
+<span class="hljs-built_in">set</span> <span class="hljs-built_in">number</span>
+<span class="hljs-string">" 隐藏滚动条"</span>
+<span class="hljs-built_in">set</span> guioptions-=r
+<span class="hljs-built_in">set</span> guioptions-=L
+<span class="hljs-built_in">set</span> guioptions-=b
+<span class="hljs-string">"隐藏顶部标签栏"</span>
+<span class="hljs-built_in">set</span> showtabline=<span class="hljs-number">0</span>
+<span class="hljs-string">"设置字体"</span>
+<span class="hljs-built_in">set</span> guifont=Monaco:h13
+syntax <span class="hljs-command"><span class="hljs-keyword">on</span> <span class="hljs-string">"开启语法高亮"</span></span>
+let g:solarized_termcolors=<span class="hljs-number">256</span> <span class="hljs-string">"solarized主题设置在终端下的设置"</span>
+<span class="hljs-built_in">set</span> background=dark <span class="hljs-string">"设置背景色"</span>
+colorscheme solarized
+<span class="hljs-built_in">set</span> nowrap <span class="hljs-string">"设置不折行"</span>
+<span class="hljs-built_in">set</span> fileformat=unix <span class="hljs-string">"设置以unix的格式保存文件"</span>
+<span class="hljs-built_in">set</span> cindent <span class="hljs-string">"设置C样式的缩进格式"</span>
+<span class="hljs-built_in">set</span> tabstop=<span class="hljs-number">4</span> <span class="hljs-string">"设置table长度"</span>
+<span class="hljs-built_in">set</span> shiftwidth=<span class="hljs-number">4</span> <span class="hljs-string">"同上"</span>
+<span class="hljs-built_in">set</span> showmatch <span class="hljs-string">"显示匹配的括号"</span>
+<span class="hljs-built_in">set</span> scrolloff=<span class="hljs-number">5</span> <span class="hljs-string">"距离顶部和底部5行"</span>
+<span class="hljs-built_in">set</span> laststatus=<span class="hljs-number">2</span> <span class="hljs-string">"命令行为两行"</span>
+<span class="hljs-built_in">set</span> fenc=utf-<span class="hljs-number">8</span> <span class="hljs-string">"文件编码"</span>
+<span class="hljs-built_in">set</span> backspace=<span class="hljs-number">2</span>
+<span class="hljs-built_in">set</span> mouse=<span class="hljs-operator">a</span> <span class="hljs-string">"启用鼠标"</span>
+<span class="hljs-built_in">set</span> selection=exclusive
+<span class="hljs-built_in">set</span> selectmode=mouse,key
+<span class="hljs-built_in">set</span> matchtime=<span class="hljs-number">5</span>
+<span class="hljs-built_in">set</span> ignorecase <span class="hljs-string">"忽略大小写"</span>
+<span class="hljs-built_in">set</span> incsearch
+<span class="hljs-built_in">set</span> hlsearch <span class="hljs-string">"高亮搜索项"</span>
+<span class="hljs-built_in">set</span> noexpandtab <span class="hljs-string">"不允许扩展table"</span>
+<span class="hljs-built_in">set</span> whichwrap+=&lt;,&gt;,h,l
+<span class="hljs-built_in">set</span> autoread
+<span class="hljs-built_in">set</span> cursorline <span class="hljs-string">"突出显示当前行"</span>
+<span class="hljs-built_in">set</span> cursorcolumn <span class="hljs-string">"突出显示当前列"</span>
+
+<span class="hljs-built_in">set</span> showcmd</code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     我感觉vim毕竟是一个文本编辑器，如果想要熟练使用就必须经常用。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79667680
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=vim&amp;t=blog" target="_blank">
+    vim
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7476668" target="_blank">
+    编程
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

@@ -1,0 +1,158 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   angr学习【一】
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年05月12日 00:56:34
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：33
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     最近由于遇到一些题需要使用angr框架解决。因此呢，学习一下吧，这个框架。
+    </p>
+    <h3 id="环境安装">
+     环境安装
+    </h3>
+    <p>
+     <a href="https://github.com/angr" rel="nofollow">
+      https://github.com/angr
+     </a>
+     <br/>
+     不多说了。说麻烦也挺麻烦。
+    </p>
+    <h3 id="题目一">
+     题目一
+    </h3>
+    <p>
+     其实算不上什么题目，自己写了个demo，用来看看angr的一些细节的东西。
+     <br/>
+     代码如下：
+    </p>
+    <pre class="prettyprint"><code class=" hljs cpp"><span class="hljs-preprocessor">#include&lt;stdio.h&gt;</span>
+<span class="hljs-keyword">void</span> success(){
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">"success\n"</span>);
+}
+<span class="hljs-keyword">void</span> failed(){
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">"failed\n"</span>);
+}
+<span class="hljs-keyword">int</span> main(<span class="hljs-keyword">void</span>){
+    <span class="hljs-keyword">char</span> name[<span class="hljs-number">9</span>];
+    <span class="hljs-built_in">scanf</span>(<span class="hljs-string">"%s"</span>,name);
+    <span class="hljs-keyword">if</span>(!<span class="hljs-built_in">strcmp</span>(name,<span class="hljs-string">"jsk"</span>)){
+        success();
+    }<span class="hljs-keyword">else</span>{
+        failed();
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</code></pre>
+    <p>
+     注意编译的时候要先关闭PIE，毕竟是作为demo用来学习angr用的。
+     <br/>
+     <strong>
+      <em>
+       在刚开始我用的是gets结果坑了自己一把，不信你可以去试试。嘿嘿
+      </em>
+     </strong>
+     <br/>
+     可以用checksec检查一下开启了哪些保护。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180512001935579?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     IDA查看，代码逻辑很简单就只有两个分支。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180512002042238?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     定位到两个分支对应的地址。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180512002148818?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     编写angr脚本。这里一点一点来。
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">from</span> angr <span class="hljs-keyword">import</span> * 导入angr</code></pre>
+    <pre class="prettyprint"><code class=" hljs ini"><span class="hljs-setting">p = <span class="hljs-value">Project(<span class="hljs-string">"test"</span>,auto_load_libs=<span class="hljs-keyword">False</span>)  加载二进制程序</span></span></code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180512003003575?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     只需要关注一下这几个属性就可以了。这里首先了解一下factory，也就是工场的意思，创建了一个项目(Project)之后肯定需要一个工场来解决问题。
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">state=p<span class="hljs-preprocessor">.factory</span><span class="hljs-preprocessor">.entry</span>_state()
+接着创建一个状态，默认就是程序的入口地址
+也可以指定一个地址作为入口地址</code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180512003944563?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">sm=p<span class="hljs-preprocessor">.factory</span><span class="hljs-preprocessor">.simulation</span>_manager(state) 创建一个模拟器用来模拟程序执行。</code></pre>
+    <pre class="prettyprint"><code class=" hljs matlab">res=<span class="hljs-transposed_variable">sm.</span>explore(<span class="hljs-built_in">find</span>=<span class="hljs-number">0x4005fb</span>,avoid=<span class="hljs-number">0x400607</span>) 
+使用explore执行模拟器，<span class="hljs-built_in">find</span>和avoid用来作为约束条件。</code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180512004315944?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     可见found了一个结果。
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">res<span class="hljs-preprocessor">.found</span>[<span class="hljs-number">0</span>]<span class="hljs-preprocessor">.posix</span><span class="hljs-preprocessor">.dumps</span>(<span class="hljs-number">0</span>)</code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180512004501250?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     完整脚本如下：
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">from</span> angr <span class="hljs-keyword">import</span> *
+<span class="hljs-keyword">import</span> logging
+logging.getLogger(<span class="hljs-string">'angr.manager'</span>).setLevel(logging.DEBUG) <span class="hljs-comment">#用来记录日志</span>
+p = Project(<span class="hljs-string">"test"</span>,auto_load_libs=<span class="hljs-keyword">False</span>)
+state=p.factory.entry_state()
+sm=p.factory.simulation_manager(state)
+res=sm.explore(find=<span class="hljs-number">0x4005fb</span>,avoid=<span class="hljs-number">0x400607</span>)
+<span class="hljs-keyword">print</span> len(res.found)
+<span class="hljs-keyword">if</span> len(res.found) &gt; <span class="hljs-number">0</span>:
+    <span class="hljs-keyword">print</span> res.found[<span class="hljs-number">0</span>].posix.dumps(<span class="hljs-number">0</span>)</code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     今天对angr有了初步的认识，明天在进一步的学习。睡觉，晚安！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80276628
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7599290" target="_blank">
+    Re
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

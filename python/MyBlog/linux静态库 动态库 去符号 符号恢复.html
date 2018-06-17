@@ -1,0 +1,249 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   linux静态库 动态库 去符号 符号恢复
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年04月17日 00:45:08
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：37
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     最近遇到了一题去除符号的题目，需要进行符号修复。为此学习了一波，顺便补了补其它的一下知识。
+    </p>
+    <h3 id="准备知识">
+     准备知识
+    </h3>
+    <p>
+     命名方式:
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">动态库libxxx<span class="hljs-preprocessor">.so</span><span class="hljs-preprocessor">.major</span><span class="hljs-preprocessor">.minor</span>    <span class="hljs-preprocessor">.so</span> <span class="hljs-preprocessor">.dll</span>
+静态库:libxxx<span class="hljs-preprocessor">.a</span>                <span class="hljs-preprocessor">.a</span> <span class="hljs-preprocessor">.lib</span></code></pre>
+    <p>
+     生成动态库 gcc -shared -o libxxx.so.1.0 hello.o
+     <br/>
+     生成静态库 ar cqs libxxx.a hello.o
+     <br/>
+     用于设置动态库的路径 export LD_LIBRARY_PATH
+     <br/>
+     用于设置静态库的路径 export LIBRARY_PATH
+    </p>
+    <p>
+     ldd工具：查看依赖的动态库和静态库
+     <br/>
+     nm工具：查看静态库和动态库中的函数名。T类当前库中定义的，U类表示是被调用的，W类表示可能被覆盖的
+     <br/>
+     strip工具 可以去除程序的符号，缩小程序体积
+     <br/>
+     在linux下gcc默认的编译选项就是动态库
+     <br/>
+     ar -r 更新静态库
+     <br/>
+     ar -d -v libxxx.a module.o  删除静态库中的某一模块
+     <br/>
+     ar -t libxxx.a 列出静态库中包含的模块
+     <br/>
+     ar -s 相当于ranlib，用于更新符号索引表
+    </p>
+    <h3 id="实验">
+     实验
+    </h3>
+    <p>
+     首先我自己写了个简单的hello程序
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180416202217368?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/font" title=""/>
+    </p>
+    <h4 id="动态链接">
+     动态链接
+    </h4>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180416202500827?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180416202534081?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     IDA下查看
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180416202717157?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     使用strip 去除符号
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180416202958505?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <h4 id="静态链接">
+     静态链接
+    </h4>
+    <pre class="prettyprint"><code class=" hljs lasso">gcc <span class="hljs-attribute">-static</span> t<span class="hljs-built_in">.</span>c <span class="hljs-attribute">-o</span> t</code></pre>
+    <p>
+     使用nm查看时可以看到大量的输出。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180416203206790?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     ldd的输出
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180416203142565?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     使用strip去除符号后同动态链接类似。
+     <br/>
+     使用IDA打开…
+    </p>
+    <h3 id="恢复符号-flirt签名技术">
+     恢复符号-FLIRT签名技术
+    </h3>
+    <p>
+     注意一下相关工具在ida的目录下，可以找到flirt.zip，解压出来即可
+     <br/>
+     建议看一下flirt的readme.txt。
+    </p>
+    <pre class="prettyprint"><code class=" hljs applescript">Typical scenario <span class="hljs-keyword">of</span> a signature creation <span class="hljs-keyword">is</span>:
+    - <span class="hljs-command">run</span> a parser <span class="hljs-keyword">and</span> create pattern (PAT) files
+    - <span class="hljs-command">run</span> sigmake <span class="hljs-keyword">and</span> <span class="hljs-keyword">get</span> EXC <span class="hljs-type">file</span> <span class="hljs-keyword">with</span> collisions
+    - edit EXC <span class="hljs-type">file</span> <span class="hljs-keyword">and</span> resolve collisions
+    - <span class="hljs-command">run</span> sigmake again <span class="hljs-keyword">and</span> <span class="hljs-keyword">get</span> SIG <span class="hljs-type">file</span>
+    - <span class="hljs-keyword">repeat</span> <span class="hljs-keyword">the</span> <span class="hljs-keyword">above</span> <span class="hljs-number">2</span> steps till collisions exist
+    - <span class="hljs-command">run</span> zipsig <span class="hljs-keyword">and</span> <span class="hljs-keyword">get</span> compressed SIG <span class="hljs-type">file</span></code></pre>
+    <p>
+     <strong>
+      <em>
+       注意一下不同环境下的库文件，用来生成PAT文件的工具时不同的，linux下使用pelf工具生成PTA
+      </em>
+     </strong>
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">plb<span class="hljs-preprocessor">.exe</span>/plb——OMF库的解析器（Borland编译器常用）
+
+pcf<span class="hljs-preprocessor">.exe</span>/pcf——COFF库的解析器（微软编译器常用）
+
+pelf<span class="hljs-preprocessor">.exe</span>/pelf—— ELF库的解析器（许多Unix系统常用）
+
+ppsx<span class="hljs-preprocessor">.exe</span>/ppsx—— 索尼PlayStation PSX的库解析器
+
+ptmobj<span class="hljs-preprocessor">.exe</span>/ptmobj——TriMedia库的解析器
+
+pomf166<span class="hljs-preprocessor">.exe</span>/pomf166——Kiel OMF <span class="hljs-number">166</span>对象文件的解析器</code></pre>
+    <p>
+     我在尝试使用pelf生成pat时，一直报错，我认为是因为libc的版本原因。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180416232716160?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     随后我在晚上下载了一个低版本的libc.a文件，可以正常的生成pat文件。
+     <br/>
+     接下来使用
+     <code>
+      sigmake GCC.pat GCC.sig
+     </code>
+     生成签名文件。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180416232937638?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以看到有13个冲突，要想成功的生成签名文件就必须解决冲突，同时我们还可以看到生成了.exc文件
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180416233101689?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     查看内容如下图：
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180416233208601?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以看到说明，由于某些函数的签名相同，因此sigmake需要你来决定该如何抉择。”+”代表应用该函数，”-“代表只在数据库中添加该函数的注释，不做处理代表你不想应用任何一个函数。
+     <br/>
+     在解决冲突时需要注意以下几点：
+    </p>
+    <pre class="prettyprint"><code class=" hljs markdown"><span class="hljs-bullet">1. </span>为最大限度地减少冲突，请删除排斥文件开头的四个注释行。
+
+<span class="hljs-bullet">2. </span>最多只能给冲突函数组中的一函数附加+/-。
+
+<span class="hljs-bullet">3. </span>如果一个冲突函数组仅包含一个函数，不要在该函数前附加+/-，让它保持原状即可。
+
+<span class="hljs-bullet">4. </span>sigmake连续运行失败会将包括注释行的数据附加到现有的任何排斥文件后。再次运行sigmake之前，必须删除这些附加数据，并更正原始数据（如果这些数据正确，sigmake将不会再次运行失败）。</code></pre>
+    <p>
+     修改.exc文件后重新使用
+     <code>
+      sigmake GCC.pat GCC.sig
+     </code>
+     命令，如果不在报错，说明sig签名文件生成。
+     <br/>
+     将签名文件拷贝到IDA的/sig/pc目录下（这个路径找了好久，网上很多教程说放在/sig目录下即可，但是7.0的ida需要放在/sig/pc目录下才能被正确识别，同时注意flair的版本同ida的版本要对应！）
+     <br/>
+     IDA中使用shift+F5，然后右键【Apply new signature…】窗口，选择生成的sig签名文件。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180417001350990?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     最终成功的匹配上了46个func，这是因为用来生成签名的libc.a版本太低了，而高版本的又生成不了签名文件。（我也不知道是不是因为版本的问题)
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     这篇文章只是基础的知识。linux就是需要多折腾！
+    </p>
+    <h4 id="参考文章">
+     参考文章
+    </h4>
+    <p>
+     <a href="https://blog.csdn.net/txx_683/article/details/53454426" rel="nofollow">
+      https://blog.csdn.net/txx_683/article/details/53454426
+     </a>
+     <br/>
+     <a href="http://drops.xmd5.com/static/drops/mobile-9797.html" rel="nofollow">
+      http://drops.xmd5.com/static/drops/mobile-9797.html
+     </a>
+     <br/>
+     <a href="http://www.voidcn.com/article/p-gtapvefh-bat.html" rel="nofollow">
+      http://www.voidcn.com/article/p-gtapvefh-bat.html
+     </a>
+     <br/>
+     <a href="https://www.jianshu.com/p/2ec7ee43e3a1" rel="nofollow">
+      https://www.jianshu.com/p/2ec7ee43e3a1
+     </a>
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79965348
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=linux&amp;t=blog" target="_blank">
+    linux
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=gcc&amp;t=blog" target="_blank">
+    gcc
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

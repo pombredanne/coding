@@ -1,0 +1,128 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   使用adb进行备份和恢复
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年02月28日 20:58:54
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：274
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     这里参考了黄皮书中的第11章
+    </p>
+    <h3 id="android中的allowbackup属性">
+     android中的allowBackup属性
+    </h3>
+    <p>
+     这个属性在开发的过程中通常是默认开启的，Google起初是为了防止数据丢失，留下了这个功能，但是这个属性也容易造成一些隐私数据的泄露。
+    </p>
+    <h3 id="导出apk">
+     导出apk
+    </h3>
+    <p>
+     假设这时我手机上有一个app，我想将其安装包复制到电脑中。
+     <br/>
+     运行该app，获取其包名
+    </p>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">adb <span class="hljs-built_in">shell</span> dumpsys activity top <span class="hljs-comment">#</span></code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180228204237779?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     找到该app的路径
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">adb shell pm path <span class="hljs-keyword">com</span><span class="hljs-preprocessor">.world</span><span class="hljs-preprocessor">.three</span></code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180228204357104?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     导出apk文件，到当前目录下。
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm"> adb pull /data/app/<span class="hljs-keyword">com</span><span class="hljs-preprocessor">.world</span><span class="hljs-preprocessor">.three</span>-<span class="hljs-number">1.</span>apk .</code></pre>
+    <p>
+     接下来可以使用一些工具，查看AndroidManifest.xml文件。发现可以进行备份。
+    </p>
+    <h3 id="备份数据">
+     备份数据
+    </h3>
+    <pre class="prettyprint"><code class=" hljs lasso"> adb backup <span class="hljs-attribute">-nosystem</span> <span class="hljs-attribute">-all</span> <span class="hljs-attribute">-noapk</span>  <span class="hljs-attribute">-noshared</span> <span class="hljs-attribute">-f</span> app_live<span class="hljs-built_in">.</span>ab com<span class="hljs-built_in">.</span>world<span class="hljs-built_in">.</span>three</code></pre>
+    <p>
+     [-system | -nosystem] 是否备份系统
+     <br/>
+     [-apk | -noapk] 是否备份apk安装文件
+     <br/>
+     [-shared | -noshared] 是否备份手机存储空间
+     <br/>
+     -f *.ab   存档格式一定要是.ab
+    </p>
+    <h3 id="查看数据">
+     查看数据
+    </h3>
+    <p>
+     这里使用abe工具解析ab文件
+     <br/>
+     <a href="http://download.csdn.net/download/jiangwei0910410003/9523470" rel="nofollow" target="_blank">
+      下载
+     </a>
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">java -jar abe<span class="hljs-preprocessor">.jar</span> unpack app_live<span class="hljs-preprocessor">.ab</span> app_live<span class="hljs-preprocessor">.rar</span></code></pre>
+    <h3 id="恢复数据">
+     恢复数据
+    </h3>
+    <pre class="prettyprint"><code class=" hljs avrasm">adb restore app_live<span class="hljs-preprocessor">.ab</span></code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     自己感觉这些命令还是比较有用的。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79405424
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=android&amp;t=blog" target="_blank">
+    android
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

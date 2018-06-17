@@ -1,0 +1,110 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   kali中eth0网卡突然消失的解决方案
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年04月17日 22:36:52
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：86
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     不知道怎么kali的eth0网卡突然消失了。这可有点难受啊。在网上查找了一番找到了解决办法，特此记录。
+    </p>
+    <h3 id="问题">
+     问题
+    </h3>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180417211744487?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180417211752519?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     怎么办？
+    </p>
+    <h3 id="解决办法">
+     解决办法
+    </h3>
+    <p>
+     首先使用ifconfig -a命令查看所有的网卡接口
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180417211939314?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     发现存在eth0网卡，但是没有ip地址。所以我们需要在网络接口配置文件中进行设置。
+     <br/>
+     查看/etc/network/interfaces文件，发现只有lo网卡的配置
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180417223143086?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     所以发现了问题的所在，那么添加对应的eth0网卡的配置即可，既可以配置dhcp也可以使用静态ip地址。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180417223311196?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     之后重启一下networking服务即可
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">/etc/init<span class="hljs-preprocessor">.d</span>/networking restart</code></pre>
+    <p>
+     再次查看ip发现恢复正常了。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180417223436594?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     所以呢，遇到问题不要慌！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79981063
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=网卡&amp;t=blog" target="_blank">
+    网卡
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=解决方案&amp;t=blog" target="_blank">
+    解决方案
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=kali&amp;t=blog" target="_blank">
+    kali
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6925811" target="_blank">
+    kali linux
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

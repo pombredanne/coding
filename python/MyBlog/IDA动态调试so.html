@@ -1,0 +1,188 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   IDA动态调试so
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年03月11日 14:52:19
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：44
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     其实有很多大佬写过类似的文章，我这里只是自己来实现一遍，并做下记录
+    </p>
+    <h3 id="尝试">
+     尝试
+    </h3>
+    <p>
+     首先拿到一个apk程序肯定要做一些尝试，因为我们无法一开始就知道该apk做了哪些保护措施。
+     <br/>
+     通过静态分析，我们可以看到主要是在
+     <code>
+      crack.so
+     </code>
+     中的
+     <code>
+      securityCheck
+     </code>
+     函数做了校验
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180311124853608?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     因此我们需要动态的来调试crack.so
+     <br/>
+     以root权限运行android_server
+     <br/>
+     开启端口转发adb forward tcp:23946 tcp:23946
+     <br/>
+     使用IDA附加进程，在
+     <code>
+      securityCheck
+     </code>
+     函数下断点。F9运行到断点处，这时程序终止了！！！
+     <br/>
+     这说明了该apk做了反调试检测。主要是利用了linux的ptrace机制。我们可以来查看一下。
+     <br/>
+     首先获取进程的pid
+    </p>
+    <pre class="prettyprint"><code class=" hljs haskell"><span class="hljs-title">cat</span> /<span class="hljs-keyword">proc</span>/[pid]/status</code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180311125532256?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     可以看到
+     <code>
+      TracerPid
+     </code>
+     进程号。
+    </p>
+    <h3 id="使用debuggable模式进行调试">
+     使用debuggable模式进行调试
+    </h3>
+    <p>
+     可以看到该apk做了反调试的检测，那么我们就需要在执行到检测函数之前下断点，这样我们就可分析其逻辑，从而绕过检测。这时就需要使用debuggable模式进行动态调试了。
+     <br/>
+     .init_array是最先被加载的段信息，
+     <code>
+      JNI_OnLoad
+     </code>
+     函数是
+     <code>
+      System.loadLibrary
+     </code>
+     调用的时候执行，因此我们需要在
+     <code>
+      JNI_OnLoad
+     </code>
+     中下断点。
+     <br/>
+     首先确保该apk的debuggable开关打开，或者系统全局调试开关打开。
+     <br/>
+     <strong>
+      以Debuggable模式启动
+     </strong>
+    </p>
+    <pre class="prettyprint"><code class=" hljs r">adb shell am start -D -n <span class="hljs-keyword">...</span></code></pre>
+    <p>
+     <strong>
+      IDA附加进程
+     </strong>
+     ，注意一点，要选中这三个选项。这样才能在library加载前停下。
+    </p>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180311130658440?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <strong>
+      使用jdb进行附加：
+     </strong>
+     <br/>
+     进行端口转发,这里只需要打开ddms即可，因为ddms会自动帮我们完成端口转发的工作。如果不打开ddms,那么使用
+     <br/>
+     adb forward tcp:8700 jdwp:[pid]
+     <br/>
+     <strong>
+      <em>
+       如果使用ddms，那么记得在ddms中选中
+      </em>
+     </strong>
+     <br/>
+     如图：
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180311131903351?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     <strong>
+      <em>
+       图中的进程只是个示例，不要误解了
+      </em>
+     </strong>
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">jdb -connect <span class="hljs-keyword">com</span><span class="hljs-preprocessor">.sun</span><span class="hljs-preprocessor">.jdi</span><span class="hljs-preprocessor">.SocketAttach</span>:hostname=<span class="hljs-number">127.0</span><span class="hljs-number">.0</span><span class="hljs-number">.1</span>,port=<span class="hljs-number">8700</span></code></pre>
+    <p>
+     之后我们再次回到IDA，F9运行，这时会在linker处停下
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180311135636778?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     这时候我们可以找到crack.so ，在其中的
+     <code>
+      JNI_OnLoad
+     </code>
+     中下断点，运行。
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     一点一点来！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79516372
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=android&amp;t=blog" target="_blank">
+    android
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=调试&amp;t=blog" target="_blank">
+    调试
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

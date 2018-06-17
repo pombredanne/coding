@@ -1,0 +1,140 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   SSCTF2016 | WP re1-e7e4ad1a.apk
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年04月04日 21:12:56
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：64
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     参考文章：
+     <a href="https://blog.csdn.net/wmh_100200/article/details/72847878" rel="nofollow" target="_blank">
+      https://blog.csdn.net/wmh_100200/article/details/72847878
+     </a>
+    </p>
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     难度不大，刷题
+    </p>
+    <h3 id="内容">
+     内容
+    </h3>
+    <p>
+     首先使用androidkiller打开，jeb查看源码
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180404154750046?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180404154801456?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180404155040605?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180404154840261?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180404155211810?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <code>
+      a
+     </code>
+     类中主要进行了
+     <code>
+      des
+     </code>
+     加密。
+     <br/>
+     可以看到关键的位置，其中&amp;&amp;前面是进行了编号的判断，&amp;&amp;后面进行了密码的判断，其中
+     <code>
+      Seclreg.d(this.a)
+     </code>
+     是我们输入的密码。
+     <code>
+      getpl
+     </code>
+     是native层的函数，所以接下来分析so库。
+     <br/>
+     以32位ida打开。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180404155708944?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以看到主要是
+     <code>
+      getpl
+     </code>
+     函数，进去之后可以看到很长一段代码，里面是具体的加密算法以及判断的流程，结合java层的代码，可以猜测这里进行了des加密，但是我们不需要考虑它是如何进行加密的。因为我们从后往前看，可以看到如下代码段
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180404155924800?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     v16就是我们输入的密码，程序中未进行任何的加密，它仅仅是将v17进行了des加密，同时可以看出flag的长度位39位，现在整个apk基本上分析完了，使用ida动态调试so，在关键位置下断
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180404160222423?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     绕过长度的检测，在内存中可以看到v17的值，该值即为flag
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180404204337616?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <strong>
+      tips:由于apk进行了混淆，增加了阅读代码的难度，可以手动的改写变量名，使用n键
+     </strong>
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     真的不难o
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79818738
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=apk&amp;t=blog" target="_blank">
+    apk
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=ctf&amp;t=blog" target="_blank">
+    ctf
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

@@ -1,0 +1,160 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   2018安恒杯一月赛 Reverse WP
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年05月06日 19:01:58
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：102
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     第一次接触C++的程序，确实把我给绕晕了，很多基本的输入输入和函数都没有掌握，也就很难去分析了。这里学习了一波，记录一下。
+    </p>
+    <h3 id="分析">
+     分析
+    </h3>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180506165443529?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     程序打开有2M多，几千行代码。emmm。从该字符串入手，
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/2018050616562726?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     C++反汇编之后的函数，我们可能看不懂，但是IDA都给我们注释了，了解过C++的同学应该知道
+     <code>
+      cout,cin,endl,&lt;&lt;&lt;
+     </code>
+     之类的代码，F5反汇编查看，
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180506165913298?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     <code>
+      is_len_8
+     </code>
+     中进行了长度的判断。这时我们只需关注程序对我们的输入做了什么改变即可，因此可以忽略其中的大部分代码。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180506170100140?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     后面进行了切片操作，每次取一个字符，其中对第一个字符进行了简单的异或判断。但是对于后面的字符则做了很复杂的操作。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180506170322602?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     这代码想动态跟一遍很困难，不是已知的算法，如果要完全将其逆出来，难度可想而知，但是幸运的是，程序中是对每个字符进行判断。这样一来就可以采用逐字节爆破的方式，将正确的结果试出来！这里需要使用pintools，这个框架也学习了！
+     <br/>
+     注意到正确的结果和错误的结果返回的结果不同，编写脚本如下。
+     <br/>
+     我这里的脚本和参考的脚本一样，我觉得写的挺好的，有想法的可以用subprocess实现一下。理解了就OK。
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment">#-*- coding:utf-8 -*-</span>
+<span class="hljs-keyword">import</span> popen2,string
+
+INFILE = <span class="hljs-string">"test"</span>
+CMD = <span class="hljs-string">"/root/pin-3.6-gcc-linux/pin -t /root/pin-3.6-gcc-linux/source/tools/ManualExamples/obj-intel64/inscount1.so -- /root/5a3397463481e &lt;"</span> + INFILE
+choices = <span class="hljs-string">"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^_`{|}~"</span><span class="hljs-comment">#自定义爆破字典顺序，将数字和小写字母提前可以使得速度快一些~</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">execlCommand</span><span class="hljs-params">(command)</span>:</span>
+    <span class="hljs-keyword">global</span> f
+    fin,fout = popen2.popen2(command)
+    result1 = fin.readline()<span class="hljs-comment">#获取程序自带打印信息，wrong或者correct</span>
+    <span class="hljs-keyword">print</span> result1
+    <span class="hljs-comment"># if(result1 != 'Input : Wrong\n'):#输出Correct时终止循环</span>
+    <span class="hljs-comment">#     f = 0</span>
+    result2 = fin.readline()<span class="hljs-comment">#等待子进程结束,结果输出完成</span>
+    fin.close()
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">writefile</span><span class="hljs-params">(data)</span>:</span>
+    fi = open(INFILE,<span class="hljs-string">'w'</span>)
+    fi.write(data)
+    fi.close()
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">pad</span><span class="hljs-params">(data, n, padding)</span>:</span>
+    <span class="hljs-keyword">return</span> data + padding * (n - len(data))
+
+flag = <span class="hljs-string">''</span>
+<span class="hljs-comment"># flag = '#7Ff@(24'</span>
+f = <span class="hljs-number">1</span>
+<span class="hljs-keyword">while</span>(f):
+    l = <span class="hljs-number">0</span><span class="hljs-comment">#初始化计数器</span>
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> choices:
+        key = flag + i<span class="hljs-comment">#测试字符串</span>
+        <span class="hljs-keyword">print</span> <span class="hljs-string">"&gt;"</span>,key
+        writefile(pad(key, <span class="hljs-number">8</span>, <span class="hljs-string">'0'</span>))
+        execlCommand(CMD)
+        fi = open(<span class="hljs-string">'inscount.out'</span>, <span class="hljs-string">'r'</span>)
+        <span class="hljs-comment"># 管道写入较慢，读不到内容时继续尝试读</span>
+        <span class="hljs-keyword">while</span>(<span class="hljs-number">1</span>):
+            <span class="hljs-keyword">try</span>:
+                n = int(fi.read().split(<span class="hljs-string">' '</span>)[<span class="hljs-number">1</span>], <span class="hljs-number">10</span>)
+                <span class="hljs-keyword">break</span>
+            <span class="hljs-keyword">except</span> IndexError:
+                <span class="hljs-keyword">continue</span>
+        fi.close()
+        <span class="hljs-keyword">print</span> n
+        <span class="hljs-keyword">if</span>(n-l &gt; <span class="hljs-number">30</span> <span class="hljs-keyword">and</span> l):<span class="hljs-comment">#如果两次运行指令差别过大，说明字符正确</span>
+            flag += i
+            <span class="hljs-keyword">if</span>(len(flag)==<span class="hljs-number">8</span>):
+                f = <span class="hljs-number">0</span>
+            <span class="hljs-keyword">break</span>
+        <span class="hljs-keyword">else</span>:
+            l = n
+<span class="hljs-keyword">print</span> flag</code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180506190122180?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     主要还是学习了一些逆向的方法和技巧，抓住输入和输出，看程序到底做了哪些变化，接着就是分析算法，或者寻找其它的思路。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80217084
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=reverse&amp;t=blog" target="_blank">
+    reverse
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7599290" target="_blank">
+    Re
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

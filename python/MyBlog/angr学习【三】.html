@@ -1,0 +1,308 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   angr学习【三】
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年05月14日 21:06:05
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：21
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     这次我研究了一下angr的输入和输出，用几个例子作为示范，更深入的理解angr。
+    </p>
+    <h3 id="题目三">
+     题目三
+    </h3>
+    <p>
+     这次的程序和
+     <a href="https://mp.csdn.net/mdeditor/80276628" rel="nofollow">
+      题目一
+     </a>
+     是一样的。但是这次我尝试将
+     <code>
+      success
+     </code>
+     输出出来。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180514163255136?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     首先我们需要更改find的地址。
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm"><span class="hljs-preprocessor"># find=0x4005AF</span>
+for pp <span class="hljs-keyword">in</span> res<span class="hljs-preprocessor">.found</span>:
+    print pp<span class="hljs-preprocessor">.posix</span><span class="hljs-preprocessor">.dumps</span>(<span class="hljs-number">0</span>) 
+    print <span class="hljs-string">"-----"</span>
+    print pp<span class="hljs-preprocessor">.posix</span><span class="hljs-preprocessor">.dumps</span>(<span class="hljs-number">1</span>)</code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180514163722476?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     可以看到dumps(1)没有输出
+    </p>
+    <pre class="prettyprint"><code class=" hljs vala"><span class="hljs-preprocessor">#find=0x4005B4</span></code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180514163900717?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     这次成功的输出了success字符，由此可见。
+     <br/>
+     <code>
+      res.found[0].posix.dumps(0)
+     </code>
+     代表该状态执行路径的所有输入
+     <br/>
+     <code>
+      res.found[0].posix.dumps(1)
+     </code>
+     代表该状态执行路径的所有输出
+     <br/>
+     <strong>
+      <em>
+       这一点我会另写一篇文章进行补充
+      </em>
+     </strong>
+     <br/>
+     res.found[1]代表找到的第二种可以到达目的路径的state(通常很少出现)。OK！
+     <br/>
+     那么我们还有没有其它方式可以输出success字符串呢，当然是可以的。
+     <br/>
+     从程序的指令执行来看在0x4005AA处将s字符串赋值给了edi寄存器，那么当这条指令结束完成后，我们可以通过获取edi的值从而获取s字符串。
+     <br/>
+     因此这时的约束条件为
+     <code>
+      find=0x4005AF
+     </code>
+     ,通过查阅
+     <a href="https://github.com/angr/angr-doc/blob/master/docs/states.md#machine-state---memory-registers-and-so-on" rel="nofollow">
+      官方文档
+     </a>
+     可以知道获取寄存器值的方式。
+    </p>
+    <pre class="prettyprint"><code class=" hljs lua">addr=pp.memory.<span class="hljs-built_in">load</span>(pp.regs.edi,endness=<span class="hljs-string">'Iend_LE'</span>)
+    <span class="hljs-built_in">print</span> addr</code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180514164944481?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     可以看到此时edi的值为0x73736563637573 这就是success的倒序，为什么会倒过来呢？因为我在加载的时候使用了endness选项。
+     <br/>
+     官方的例子设置endness时使用的是
+     <code>
+      s.memory.load(0x4000, 4, endness=archinfo.Endness.LE)
+     </code>
+     <br/>
+     <a href="http://angr.io/api-doc/archinfo.html" rel="nofollow">
+      archinfo
+     </a>
+     模块，我建议还是按着官方文档来，通过翻阅archinfo的文档可以知道arch info.Endness可以有三个值。
+    </p>
+    <pre class="prettyprint"><code class=" hljs vbnet">Variables:  
+LE – little endian, least significant <span class="hljs-built_in">byte</span> <span class="hljs-keyword">is</span> stored at lowest address
+BE – big endian, most significant <span class="hljs-built_in">byte</span> <span class="hljs-keyword">is</span> stored at lowest address
+<span class="hljs-keyword">ME</span> – Middle-endian. Yep.</code></pre>
+    <p>
+     因为这里是直接将success的值附给了edi，因此使用大端显示，然后通过
+     <code>
+      pp.solver.eval(addr,cast_to=str)
+     </code>
+     输出为字符串。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180514170614389?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     github上给出的内存存储和加载的例子可以看一下。
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">&gt;&gt;&gt; s = proj<span class="hljs-preprocessor">.factory</span><span class="hljs-preprocessor">.blank</span>_state()
+&gt;&gt;&gt; s<span class="hljs-preprocessor">.memory</span><span class="hljs-preprocessor">.store</span>(<span class="hljs-number">0x4000</span>, s<span class="hljs-preprocessor">.solver</span><span class="hljs-preprocessor">.BVV</span>(<span class="hljs-number">0x0123456789abcdef0123456789abcdef</span>, <span class="hljs-number">128</span>))
+&gt;&gt;&gt; s<span class="hljs-preprocessor">.memory</span><span class="hljs-preprocessor">.load</span>(<span class="hljs-number">0x4004</span>, <span class="hljs-number">6</span>) <span class="hljs-preprocessor"># load-size is in bytes</span>
+&lt;BV48 <span class="hljs-number">0x89abcdef0123</span>&gt;</code></pre>
+    <p>
+     好!接下来的问题是如果程序使用过命令行进行输入，而且在赋值的时候，给的是字符串的地址那么这时该如何取出这些数据。这就需要我们修改下源代码。
+    </p>
+    <pre class="prettyprint"><code class=" hljs cpp"><span class="hljs-preprocessor">#include&lt;stdio.h&gt;</span>
+<span class="hljs-preprocessor">#include&lt;stdlib.h&gt;</span>
+<span class="hljs-keyword">void</span> success(){
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">"success\n"</span>);
+}
+<span class="hljs-keyword">void</span> failed(){
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">"failed\n"</span>);
+}
+<span class="hljs-keyword">int</span> main(<span class="hljs-keyword">int</span> argc ,<span class="hljs-keyword">char</span> *argv[]){
+    <span class="hljs-keyword">if</span>(argc&lt;<span class="hljs-number">2</span>){
+        <span class="hljs-built_in">printf</span>(<span class="hljs-string">"please input eg"</span>);
+        <span class="hljs-built_in">exit</span>(<span class="hljs-number">0</span>);
+    }
+    <span class="hljs-keyword">char</span> *word=<span class="hljs-string">"jsk"</span>;
+    <span class="hljs-keyword">if</span>(!<span class="hljs-built_in">strcmp</span>(argv[<span class="hljs-number">1</span>],word)){
+        success();
+    }<span class="hljs-keyword">else</span>{
+        failed();
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</code></pre>
+    <p>
+     这里通过命令行参数获取输入，这时如果复用之前的脚本还能够跑出结果么？
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180514194809351?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     可以看到最终只有一个avoid的路径，那是因为我们没有构造命令行参数，也就没有输入，那么肯定就会执行
+     <code>
+      exit
+     </code>
+     这条路径，所以我们需要使用
+     <code>
+      claripy
+     </code>
+     模块构造输入。
+     <br/>
+     github上给的说明是
+    </p>
+    <pre class="prettyprint"><code class=" hljs vbnet">It <span class="hljs-keyword">is</span> usable!
+
+General usage <span class="hljs-keyword">is</span> similar <span class="hljs-keyword">to</span> z3:</code></pre>
+    <p>
+     哈哈哈。可惜我不懂z3，可能也是个约束求解器。233333，这个
+     <a href="http://angr.io/api-doc/claripy.html" rel="nofollow">
+      文档
+     </a>
+     比较好。
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl">rax_start = claripy.BVS(<span class="hljs-string">'rax_start'</span>, <span class="hljs-number">8</span><span class="hljs-variable">*8</span>)</code></pre>
+    <p>
+     创建一个8字节的参数，名字为rax_start。这里可以参考
+     <a href="https://blog.csdn.net/qq_33438733/article/details/80300289" rel="nofollow">
+      angr学习【二】
+     </a>
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">pp<span class="hljs-preprocessor">.solver</span><span class="hljs-preprocessor">.eval</span>(arg1,cast_to=str)</code></pre>
+    <p>
+     可以看一下eval都有哪些参数，经测试
+     <code>
+      cast_to
+     </code>
+     只支持
+     <code>
+      int
+     </code>
+     和
+     <code>
+      str
+     </code>
+     类型
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180514204142416?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     最终打印出正确的输入。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180514203809323?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     在测试的过程中我发现
+     <code>
+      pp.posix.files[0]
+     </code>
+     是一个SimFile类型。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180514204014537?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     可以看到他有read方法，可以读取文件当前状态的数据。
+     <br/>
+     当然我们既然已经学过利用内存来进行数据的存取，同样的也可以每次将我们的输入存放到指定内存中，当我们寻找到了指定路径时在从该内存中获取我们的输入。
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">mem_arg=state<span class="hljs-preprocessor">.memory</span><span class="hljs-preprocessor">.store</span>(<span class="hljs-number">0x1000</span>,arg1)
+addr=pp<span class="hljs-preprocessor">.memory</span><span class="hljs-preprocessor">.load</span>(<span class="hljs-number">0x1000</span>,endness=archinfo<span class="hljs-preprocessor">.Endness</span><span class="hljs-preprocessor">.BE</span>)
+print pp<span class="hljs-preprocessor">.solver</span><span class="hljs-preprocessor">.eval</span>(addr,cast_to=str)</code></pre>
+    <p>
+     好这时我已经成功获取了命令行的输入，接下来尝试获取程序的输出。
+     <br/>
+     基础的步骤我就不做了23333
+     <br/>
+     这里我通过寄存器来获取succcess字符串。定位到指定地址。首先输出一下edi看下。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180514210012552?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     emmmm，好像没有达到我想要测试的目的丫…23333.算了不改了。
+     <br/>
+     其实我想说的是，memory.load用来加载指定内存中的数据，如果是指针，那么需要进行两次load，注意大端小端的问题，最后使用solver.eval进行转化。
+    </p>
+    <h3 id="脚本">
+     脚本
+    </h3>
+    <p>
+     附上完整代码(find的地址自己去改)：
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl"><span class="hljs-comment"># -*- coding:utf-8 -*-</span>
+from angr import *
+import logging,claripy,archinfo
+logging.getLogger(<span class="hljs-string">'angr.manager'</span>).setLevel(logging.DEBUG)
+p = Project(<span class="hljs-string">"test3"</span>,auto_load_libs=False)
+arg1=claripy.BVS(<span class="hljs-string">"arg1"</span>,<span class="hljs-number">16</span><span class="hljs-variable">*8</span>)
+args=[p.filename,arg1]
+<span class="hljs-keyword">state</span>=p.factory.entry_state(args=args)
+mem_arg=<span class="hljs-keyword">state</span>.memory.store(<span class="hljs-number">0x1000</span>,arg1)
+sm=p.factory.simulation_manager(<span class="hljs-keyword">state</span>,threads=<span class="hljs-number">4</span>)
+find=<span class="hljs-number">0x4005CF</span>
+avoid=[<span class="hljs-number">0x4005FD</span>,<span class="hljs-number">0x400648</span>]
+res=sm.explore(find=find,avoid=avoid)
+<span class="hljs-keyword">print</span> res
+<span class="hljs-keyword">for</span> pp in res.found:
+    addr=pp.memory.load(<span class="hljs-number">0x1000</span>,endness=archinfo.Endness.BE)
+    <span class="hljs-keyword">print</span> pp.solver.<span class="hljs-keyword">eval</span>(addr,cast_to=str)
+    <span class="hljs-keyword">print</span> <span class="hljs-string">"---"</span>
+    <span class="hljs-keyword">print</span> pp.posix.dumps(<span class="hljs-number">0</span>)
+    <span class="hljs-keyword">print</span> pp.posix.dumps(<span class="hljs-number">1</span>)
+    <span class="hljs-keyword">print</span> <span class="hljs-string">"---"</span>
+    <span class="hljs-keyword">print</span> pp.solver.<span class="hljs-keyword">eval</span>(arg1,cast_to=str)
+    <span class="hljs-keyword">print</span> <span class="hljs-string">"---"</span>
+    edi_addr=pp.memory.load(pp.regs.edi,endness=archinfo.Endness.BE)
+    <span class="hljs-keyword">print</span> pp.solver.<span class="hljs-keyword">eval</span>(edi_addr)</code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     写了挺多，例子很简单，自己也更深入的理解了angr的输入输出。接下来就需要刷一刷题了，把
+     <a href="https://github.com/angr/angr-doc/tree/master/examples" rel="nofollow">
+      angr-doc/example
+     </a>
+     中的例子都给看一遍。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80315245
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7599290" target="_blank">
+    Re
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

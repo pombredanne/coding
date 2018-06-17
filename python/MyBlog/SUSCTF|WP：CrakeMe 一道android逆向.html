@@ -1,0 +1,133 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   SUSCTF|WP：CrakeMe 一道android逆向
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年04月01日 17:19:01
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：51
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     可能是第一次单字节手动爆flag
+    </p>
+    <h3 id="开始">
+     开始
+    </h3>
+    <p>
+     这题是一个涉及到so动态调试的apk。我之前都是用红米note来进行动态调试的，因为android4.4感觉脱壳比较容易，但这次的版本要求为api 26也就是android8.0.这就有点蛋疼了，还好我自己用的手机够格，所以就拿自己手机上了。先是搭了一波环境，64位32位搞不清了都，ida附加了半天没附加上去，最后使用64位来调的。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180401170105272?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180401170129997?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     check1函数的过程比较的简单，关键在native层的check函数。
+    </p>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180401170252012?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     <code>
+      check
+     </code>
+     函数中最棘手的恐怕是
+     <code>
+      srand()
+     </code>
+     和
+     <code>
+      rand()
+     </code>
+     这两个随机数了，它是产生一个随机数然后和我们的输入相加，在和一个固定的数组进行比较，
+     <code>
+      flag
+     </code>
+     长度为28位。我采用的方法比较笨，就是动态去跟，得到每次的随机数然后求出正确的
+     <code>
+      v4
+     </code>
+     ，最后可以得到全部的输入序列。在通过脚本解密序列，得到flag。我在求解flag时，懒得的整体的脚本，就写了局部的爆破单个字母的脚本。最后几个字符时猜测出来的，所以序列也没求完整。
+    </p>
+    <pre class="prettyprint"><code class=" hljs mathematica">#random的值每次都会变化
+<span class="hljs-number">35</span>FCFD38 random
+#求得的正确的输入序列
+ac f9 aa e9 bd fb <span class="hljs-number">80</span> e8 <span class="hljs-number">89</span> ff <span class="hljs-number">9</span>a c5 a3 d6 b8 e7 <span class="hljs-number">90</span> f9 <span class="hljs-number">8</span>d e5 ba d4 b5 c1 a8.
+#用来比较的v3数组
+<span class="hljs-number">93</span> <span class="hljs-number">96</span> <span class="hljs-number">1</span>A <span class="hljs-number">57</span> <span class="hljs-number">34</span> <span class="hljs-number">60</span> A9 <span class="hljs-number">23</span>  <span class="hljs-number">8</span><span class="hljs-keyword">C</span> <span class="hljs-number">3</span><span class="hljs-keyword">D</span> <span class="hljs-number">94</span> <span class="hljs-number">6</span>A ED <span class="hljs-number">22</span> <span class="hljs-number">92</span> <span class="hljs-number">1</span>F
+<span class="hljs-number">81</span> <span class="hljs-number">7</span><span class="hljs-keyword">C</span> <span class="hljs-number">88</span> <span class="hljs-number">73</span> <span class="hljs-number">57</span> A2 <span class="hljs-number">13</span> <span class="hljs-number">5</span><span class="hljs-keyword">C</span>  <span class="hljs-number">22</span> <span class="hljs-number">75</span> <span class="hljs-number">40</span> <span class="hljs-number">26</span> <span class="hljs-number">3</span>A <span class="hljs-number">6</span>A <span class="hljs-number">64</span> <span class="hljs-number">13</span>
+<span class="hljs-number">7</span>F <span class="hljs-number">53</span> <span class="hljs-number">39</span> <span class="hljs-number">21</span> <span class="hljs-number">5</span>F <span class="hljs-number">5</span><span class="hljs-keyword">C</span> <span class="hljs-number">41</span> <span class="hljs-number">35</span>  B7 <span class="hljs-number">04</span> <span class="hljs-number">13</span> <span class="hljs-number">32</span> <span class="hljs-number">26</span> <span class="hljs-number">8</span><span class="hljs-keyword">C</span> <span class="hljs-number">8</span>A <span class="hljs-number">23</span>
+F6 <span class="hljs-number">07</span> <span class="hljs-number">73</span> <span class="hljs-number">0</span><span class="hljs-keyword">D</span> <span class="hljs-number">68</span> <span class="hljs-number">52</span> <span class="hljs-number">2</span><span class="hljs-keyword">D</span> <span class="hljs-number">62</span>  <span class="hljs-number">04</span> <span class="hljs-number">2</span><span class="hljs-keyword">E</span> <span class="hljs-number">3</span><span class="hljs-keyword">D</span> <span class="hljs-number">7</span><span class="hljs-keyword">C</span> <span class="hljs-number">7</span><span class="hljs-keyword">E</span> <span class="hljs-number">8</span>F <span class="hljs-number">19</span> <span class="hljs-number">72</span>
+F2 <span class="hljs-number">6</span>A F7 <span class="hljs-number">7</span><span class="hljs-keyword">D</span> AA <span class="hljs-number">31</span> <span class="hljs-number">84</span> <span class="hljs-number">4</span><span class="hljs-keyword">E</span>  <span class="hljs-number">61</span> <span class="hljs-number">08</span> <span class="hljs-number">65</span> <span class="hljs-number">28</span> E9 E3 D8 <span class="hljs-number">0</span>F
+<span class="hljs-number">1</span>A <span class="hljs-number">1</span>F <span class="hljs-number">6</span><span class="hljs-keyword">C</span> <span class="hljs-number">19</span> B3 <span class="hljs-number">8</span>A FE <span class="hljs-number">05</span>  <span class="hljs-number">5</span><span class="hljs-keyword">D</span> <span class="hljs-number">49</span> <span class="hljs-number">31</span> <span class="hljs-number">12</span> <span class="hljs-number">98</span> D9 <span class="hljs-number">59</span> <span class="hljs-number">53</span>
+E0 FD FC <span class="hljs-number">35</span> D4 <span class="hljs-number">0</span><span class="hljs-keyword">D</span> <span class="hljs-number">2</span><span class="hljs-keyword">D</span> <span class="hljs-number">3</span>B  <span class="hljs-number">45</span> <span class="hljs-number">3</span><span class="hljs-keyword">E</span> <span class="hljs-number">11</span> <span class="hljs-number">61</span> B8 <span class="hljs-number">57</span> <span class="hljs-number">4</span><span class="hljs-keyword">C</span> <span class="hljs-number">31</span></code></pre>
+    <p>
+     贴出脚本：
+    </p>
+    <pre class="prettyprint"><code class=" hljs python">根据得到的输入序列，爆破出正确的单个字符
+<span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> range(<span class="hljs-number">0</span>,<span class="hljs-number">255</span>):
+        t=j^<span class="hljs-number">0xac</span>
+        <span class="hljs-keyword">if</span> t==<span class="hljs-number">0xf9</span>:
+            <span class="hljs-keyword">print</span> chr(j)
+<span class="hljs-comment">#SUSCTF{have_fun_with_nati}</span>
+<span class="hljs-comment">#SUSCTF{have_fun_with_native}</span></code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     这题也是学习了，刚开始卡壳了很久，一直在纠结怎么将版本限制给取消了，要不要对着它的加密过程自己写一个一样的或者说能不能利用他给的so库，刚开始的思路有很多，但都感觉不是很实际，最后比较运气，老老实实的动态的跟了一遍。
+     <br/>
+     ps：志愿者不是小姐姐差评！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79779753
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=android&amp;t=blog" target="_blank">
+    android
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

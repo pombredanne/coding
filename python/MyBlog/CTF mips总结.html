@@ -1,0 +1,220 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   CTF mips总结
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年05月11日 08:41:24
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：98
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     感觉自己就是把几个mips的题给汇总了一下，算不上是总结吧。不过还是很有收获的。
+    </p>
+    <h3 id="题目一">
+     题目一
+    </h3>
+    <p>
+     DDCTF-babymips
+     <br/>
+     拿到题目，分析是mips小端序，利用qemu模拟运行，注意要使用小端序(qemu也区分了大端小端)。然后输入了16个字符，结果出现段错误。23333
+     <br/>
+     然后我就放弃了。
+     <br/>
+     <a href="https://www.codetd.com/article/67983" rel="nofollow">
+      https://www.codetd.com/article/67983
+     </a>
+     <br/>
+     <a href="https://cloud.tencent.com/developer/news/196131" rel="nofollow">
+      https://cloud.tencent.com/developer/news/196131
+     </a>
+     <br/>
+     参考这两篇文章我又复现了一遍。
+     <br/>
+     qemu动态调试，我也没有成功2333.所以感觉自己分析不出这是花指令。
+     <br/>
+     好吧，假如看出了是花指令，然后使用idc或者python去除之后。得到patch后的程序，使用ida反编译。
+     <br/>
+     同样的搜索字符串定位到sub_400420函数，从后往前看，可以看到这么个流程图
+     <br/>
+     <img alt="这里写图片描述" src="//img-blog.csdn.net/20180507171025476?watermark/2/text/Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     数了一下，有16条判断，正确的流程应该是从右边过来。猜测这就是要对我们输入的16个数进行判断了。随便找一个判断看看。
+     <br/>
+     <img alt="这里写图片描述" src="//img-blog.csdn.net/20180507171254703?watermark/2/text/Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     233333.根本看不懂丫这些数据都是动态分配的吧。F5又无效，没办法了。
+     <br/>
+     反编译mips指令有两种办法Retdec,和jeb2-mips。我两种方法都是了一遍。emmm，感觉还是Retdec好用。jeb其实很好，但是demo版的功能受限了。。。老是莫名其妙的退出？？？蒙蔽。
+     <br/>
+     <img alt="这里写图片描述" src="//img-blog.csdn.net/20180507174002429?watermark/2/text/Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     求个jeb2.3mips的破解版。。。
+     <br/>
+     使用Retdec反编译后，定位到sub_400420函数，查看逻辑
+     <br/>
+     <img alt="这里写图片描述" src="//img-blog.csdn.net/20180507171906817?watermark/2/text/Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     后面也是同样，是16个方程组，也就是说我们只需要解出这个方程组就可以了。不过把这些数据抠出来也是个麻烦事！！！23333.得亏之前学了一波matlab。解线性方程组，用matlab或者python都是可以解决的。
+     <br/>
+     抠数据抠的累的。233333….
+     <br/>
+     另外看了pandaos师傅的wp，发现可以angr解决。代码如下：
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl"><span class="hljs-comment"># -*- coding:utf-8 -*-</span>
+from angr import *
+import logging
+import IPython
+logging.getLogger(<span class="hljs-string">'angr.manager'</span>).setLevel(logging.DEBUG)
+p = Project(<span class="hljs-string">'baby_mips'</span>)
+<span class="hljs-keyword">state</span> = p.factory.blank_state(addr=<span class="hljs-number">0x400420</span>)
+DATA_ADDR = <span class="hljs-number">0xA0000</span>
+<span class="hljs-keyword">state</span>.regs.a<span class="hljs-number">0</span> = DATA_ADDR
+<span class="hljs-keyword">for</span> i in range(<span class="hljs-number">16</span><span class="hljs-variable">*4</span>):
+    <span class="hljs-keyword">vec</span> = <span class="hljs-keyword">state</span>.solver.BVS(<span class="hljs-string">"c{}"</span>.<span class="hljs-keyword">format</span>(i),<span class="hljs-number">8</span>,explicit_name=True)
+    cond = <span class="hljs-keyword">state</span>.solver.And(<span class="hljs-keyword">vec</span>&gt;=<span class="hljs-number">32</span>,<span class="hljs-keyword">vec</span>&lt;=<span class="hljs-number">126</span>) <span class="hljs-comment"># low byte</span>
+    <span class="hljs-keyword">state</span>.memory.store(DATA_ADDR+i,<span class="hljs-keyword">vec</span>)
+    <span class="hljs-keyword">if</span> i % <span class="hljs-number">4</span> == <span class="hljs-number">0</span>:
+        pass
+    <span class="hljs-comment">#state.add_constraints(cond)</span>
+sm = p.factory.simulation_manager(<span class="hljs-keyword">state</span>)
+res = sm.explore(find=<span class="hljs-number">0x40321c</span>,avoid=[<span class="hljs-number">0x403210</span>,<span class="hljs-number">0x403078</span>,<span class="hljs-number">0x402EDC</span>,<span class="hljs-number">0x402D44</span>,<span class="hljs-number">0x402BAC</span>,<span class="hljs-number">0x402A14</span>,<span class="hljs-number">0x402878</span>,<span class="hljs-number">0x4026DC</span>,<span class="hljs-number">0x402544</span>,<span class="hljs-number">0x4023AC</span>,<span class="hljs-number">0x402214</span>,<span class="hljs-number">0x40207C</span>,<span class="hljs-number">0x401EE0</span>,<span class="hljs-number">0x401D44</span>,<span class="hljs-number">0x401BA8</span>,<span class="hljs-number">0x401A10</span>,<span class="hljs-number">0x403710</span>])
+<span class="hljs-comment"># 这些地址不不同?人的bin会不不?一样。</span>
+found = res.found[<span class="hljs-number">0</span>]
+mem = found.memory.load(DATA_ADDR,<span class="hljs-number">16</span><span class="hljs-variable">*4</span>)
+<span class="hljs-keyword">print</span> found.solver.<span class="hljs-keyword">eval</span>(mem)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'##########################################'</span>
+flag = <span class="hljs-string">''</span>
+<span class="hljs-keyword">for</span> i in range(<span class="hljs-number">16</span>):
+    v = found.memory.load(DATA_ADDR + <span class="hljs-number">4</span><span class="hljs-variable">*i</span>,<span class="hljs-number">1</span>)
+    flag = flag + found.solver.<span class="hljs-keyword">eval</span>(v,cast_to=str)
+<span class="hljs-keyword">print</span> flag  <span class="hljs-comment">#193e9499db7603e6</span></code></pre>
+    <p>
+     <img alt="这里写图片描述" src="//img-blog.csdn.net/20180507233234282?watermark/2/text/Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     <img alt="这里写图片描述" src="//img-blog.csdn.net/20180507233250477?watermark/2/text/Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <h3 id="题目二">
+     题目二
+    </h3>
+    <p>
+     西湖论剑个人赛 iot  5ad94a626c884
+     <br/>
+     <img alt="这里写图片描述" src="//img-blog.csdn.net/20180508000537503?watermark/2/text/Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     比较的蛋疼，运行不了。。但是呢，这题还是比较简单的。ida查看。
+     <br/>
+     <img alt="这里写图片描述" src="//img-blog.csdn.net/20180508001832637?watermark/2/text/Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     还是比较清楚的吧，flag长度为0x20
+     <br/>
+     <img alt="这里写图片描述" src="//img-blog.csdn.net/20180508002432498?watermark/2/text/Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     定位到关键函数
+     <code>
+      sub_400790
+     </code>
+     ，IDA进去之后发现有点乱，因此使用retdec在线反编译。主办方提示说是base64，但是没找到base64的table啊！
+     <br/>
+     ***ps.retdec可以在线反编译也可以使用它提供的api在ida内进行反编译***dd
+    </p>
+    <p>
+     但是这题有非预期解，不知道怎么回事，将文件直接转化为base64即可看到flag，这里不多探究了。
+    </p>
+    <h3 id="题目三">
+     题目三
+    </h3>
+    <p>
+     2018国赛 2ex
+     <br/>
+     当我做到这题的时候已经没什么时间去分析了，而且mips的题我也确实是不会。
+     <br/>
+     首先肯定要先测试一下程序。
+     <br/>
+     <img alt="这里写图片描述" src="//img-blog.csdn.net/20180508010730880?watermark/2/text/Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     输出长度为24，但是out的长度为26.。而且可以看到输出了==，再试一下其他输入
+     <br/>
+     <img alt="这里写图片描述" src="//img-blog.csdn.net/20180508011108536?watermark/2/text/Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     我觉得看到这些变化一定会有感觉的，猜测是base64，base64的话关键在于寻找table。搜寻一下可疑的字符串。
+     <br/>
+     <img alt="这里写图片描述" src="//img-blog.csdn.net/20180508011343786?watermark/2/text/Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     然后手工算了一下，确实是这个table。有了table，那么写个解base64的脚本就行了。
+     <br/>
+     代码如下:
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment"># -*- coding:utf-8 -*-</span>
+decode=<span class="hljs-string">"_r-+_Cl5;vgq_pdme7#7eC0="</span>
+table=<span class="hljs-string">'''@,.1fgvw#`/2ehux$~\"3dity%_;4cjsz^+{5bkrA&amp;=}6alqB*-[70mpC()]8'''</span>
+x=<span class="hljs-string">""</span>.join(map(<span class="hljs-keyword">lambda</span> x:bin(table.index(x))[<span class="hljs-number">2</span>:].zfill(<span class="hljs-number">6</span>),decode))
+res=[]
+<span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range((len(x))/<span class="hljs-number">8</span>):
+    res.append(chr(eval(<span class="hljs-string">'0b'</span>+x[i*<span class="hljs-number">8</span>:(i+<span class="hljs-number">1</span>)*<span class="hljs-number">8</span>])))
+<span class="hljs-keyword">print</span> <span class="hljs-string">""</span>.join(res)  <span class="hljs-comment">#flag{change53233}</span></code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     最近一阵子挺忙的。这篇文章历时4天终于写完，期间还经历了两门期中考试，一科联考。呵.呵呵.呵呵呵.希望下次在遇到mips的程序可以多少提供点思路。
+     <br/>
+     <strong>
+      <em>
+       target：study angr
+      </em>
+     </strong>
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80233448
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=mips&amp;t=blog" target="_blank">
+    mips
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7599290" target="_blank">
+    Re
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

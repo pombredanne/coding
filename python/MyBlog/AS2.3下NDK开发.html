@@ -1,0 +1,245 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   AS2.3下NDK开发
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年02月18日 22:52:24
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：45
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     这里我借着android安全黄皮书，来做一遍NDK的相关开发教程，只是为了记录下过程，同时如果遇到了什么问题也可以，及时的记录并解决。！
+     <br/>
+     <strong>
+      <em>
+       Note：原本我想照着小黄书上的过程来操作，但是书上提供的方法是基于VC6.0的，无奈上网找教程，但在实践的过程中一直都不成功，最后在官网找到了方法。因此我主要是按着官网的来。
+      </em>
+     </strong>
+     <br/>
+     <a href="https://developer.android.com/studio/projects/add-native-code.html" rel="nofollow">
+      官网链接
+     </a>
+    </p>
+    <h3 id="准备">
+     准备
+    </h3>
+    <ol>
+     <li>
+      最新版AS
+     </li>
+     <li>
+      安装NDK工具包，CMake工具以及LLDB工具(可以通过AS中SDK管理器进行安装)这样也可以省去，NDK路径的配置
+      <br/>
+      <img alt="这里写图片描述" src="https://developer.android.com/studio/images/projects/ndk-install_2-2_2x.png" title=""/>
+     </li>
+    </ol>
+    <h3 id="开始">
+     开始
+    </h3>
+    <p>
+     按着官网上，添加C/C++代码可以有两种方法，ndk-build或者是CMake外部工具，我是这么理解的。如果你直接在AS中编写C/C++代码那么选择CMake工具来构建。如果你在外部编写C/C++代码，并生成了so/dll文件那么使用ndk-build进行构建。 当然我这里使用CMake外部工具进行构建的，所有的代码均在AS中完成。
+     <br/>
+     <strong>
+      <em>
+       步骤一：
+      </em>
+     </strong>
+     <br/>
+     首先我们需要创建支持C/C++的新项目(我觉得我就是因为这一点，导致刚开始时一直报错)，默认是使用CMake工具，另外也有其它的一些选项，不过这里用不到。
+     <br/>
+     这里可以先建立一个Basic Activity项目，可以简单的看一下项目的结构。如果能看懂，基本上就不用看我这篇文章了。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180218160114965?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <strong>
+      <em>
+       步骤二：
+      </em>
+     </strong>
+     <br/>
+     接下来我们可以看一下，项目的结构，将Android视图改为Project视图。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180218215533357?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以看到main下有个cpp目录，里面默认创建了一个native-lib.cpp我们在其中添加我们的C代码即可。但这时需要使用Jni的写法才行。语法我就不多介绍了。
+     <br/>
+     <strong>
+      <em>
+       步骤三：
+      </em>
+     </strong>
+     <br/>
+     接下来再来看一下CMakeLists.txt文件，这个是编译参数的文件。
+     <br/>
+     官方有具体的说明
+     <a href="https://developer.android.com/studio/projects/add-native-code.html#create-cmake-script" rel="nofollow">
+      官网链接
+     </a>
+     <br/>
+     我简单的说明一下。
+    </p>
+    <pre class="prettyprint"><code class=" hljs vhdl">add_library( # Sets the name <span class="hljs-keyword">of</span> the <span class="hljs-keyword">library</span>.
+             native-lib
+
+             # Sets the <span class="hljs-keyword">library</span> as a <span class="hljs-keyword">shared</span> <span class="hljs-keyword">library</span>.
+             <span class="hljs-keyword">SHARED</span>
+
+             # Provides a relative path <span class="hljs-keyword">to</span> your source <span class="hljs-keyword">file</span>(s).
+             src/main/cpp/native-lib.cpp )</code></pre>
+    <p>
+     这个部分用来标明库的名称和C源文件的路径，当然也可以自行添加。
+    </p>
+    <pre class="prettyprint"><code class=" hljs glsl">find_library( <span class="hljs-preprocessor"># Sets the name of the path variable.</span>
+              <span class="hljs-built_in">log</span>-lib
+
+              <span class="hljs-preprocessor"># Specifies the name of the NDK library that</span>
+              <span class="hljs-preprocessor"># you want CMake to locate.</span>
+              <span class="hljs-built_in">log</span> )</code></pre>
+    <p>
+     find_library用于寻找NDK中的库，就是一些编译好的库，我们可以直接调用其中的API函数。
+     <br/>
+     <strong>
+      <em>
+       步骤四：
+      </em>
+     </strong>
+     <br/>
+     在需要添加C代码的类中，如class JniDemo中
+    </p>
+    <pre class="prettyprint"><code class=" hljs cs"><span class="hljs-keyword">static</span> {
+        System.loadLibrary(<span class="hljs-string">"native-lib"</span>);
+    }</code></pre>
+    <p>
+     用于加载一个库。
+    </p>
+    <pre class="prettyprint"><code class=" hljs java">   <span class="hljs-keyword">public</span> <span class="hljs-keyword">native</span> <span class="hljs-keyword">static</span> String <span class="hljs-title">sayHello</span>();</code></pre>
+    <p>
+     声明native函数的格式。
+     <br/>
+     <strong>
+      <em>
+       步骤五：
+      </em>
+     </strong>
+     <br/>
+     通常来说具体的C实现是最后编写的，先确定那部分功能需要C去实现，定义好函数头后，最后再来编写具体的实现代码。
+    </p>
+    <pre class="prettyprint"><code class=" hljs rsl"><span class="hljs-keyword">extern</span> <span class="hljs-string">"C"</span>   <span class="hljs-comment">//用于导出，如果需要导出多个，使用{}</span>
+JNIEXPORT jstring JNICALL
+Java_com_code_jsk_test_main_sayHello(
+        JNIEnv * env,
+        jobject obj){
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">"This is the printf!"</span>);
+    <span class="hljs-keyword">return</span> env-&gt;NewStringUTF(<span class="hljs-string">"This is HelloWorld from !\n"</span>);
+}</code></pre>
+    <p>
+     可以看出来，函数头往往会很长！
+     <br/>
+     当然如果你想偷懒，其实也是有办法的。前提是你必须很明确自己的需求。
+     <br/>
+     首先声明native代码。
+     <br/>
+     <strong>
+      <em>
+       还是建议新建一个简单类，非活动类如下：
+      </em>
+     </strong>
+    </p>
+    <pre class="prettyprint"><code class=" hljs cs"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> TestDemo {
+    <span class="hljs-keyword">public</span> native <span class="hljs-keyword">static</span> String <span class="hljs-title">JniTest</span>();
+}</code></pre>
+    <p>
+     简单的创建一个类即可，不需要写完。接着编译module app
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180218221841246?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     这时会生成相应的class文件。接着就需要使用javah工具(这里需要配置好环境变量)
+     <br/>
+     使用AS中的Terminal,到如下路径。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180218222143189?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     接着使用如下命令：
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">javah -d jni -classpath &lt;sdk中android<span class="hljs-preprocessor">.jar</span>的路径&gt;<span class="hljs-comment">;..\..\build\intermediates</span>
+\classes\debug <span class="hljs-keyword">com</span><span class="hljs-preprocessor">.code</span><span class="hljs-preprocessor">.jsk</span><span class="hljs-preprocessor">.test</span><span class="hljs-preprocessor">.TestDemo</span> (具体的class文件的路径)</code></pre>
+    <p>
+     -d jni 是生成的目录的名称，当然可以是其它路径，但是我仅仅是为了用于生成头文件。我这里就是用了cpp目录，最终会在cpp目录下生成一个.h文件。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180218224415624?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以看到其中有预编译好的函数头。接下的处理方法有很多……..
+     <br/>
+     基本上就是这样，最后再次运行即可。
+     <br/>
+     <strong>
+      <em>
+       其实CMakeLists.txt中的参数最终还是会传递到build.gradle中
+      </em>
+     </strong>
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     终于很艰难的实现了目的，网上有很多教程，但是没有一个能照着教程一步步做成功的，总是会在一些细节的地方缺少些什么，但对于新手来说这些细节往往是最难把握的地方。
+     <br/>
+     <strong>
+      <em>
+       静下心来，不要烦躁，终有所获！
+      </em>
+     </strong>
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79335935
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=android&amp;t=blog" target="_blank">
+    android
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=ndk&amp;t=blog" target="_blank">
+    ndk
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

@@ -1,0 +1,137 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   angr学习【四】
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年05月14日 21:13:07
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：12
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     这篇文章主要补充一下
+     <code>
+      pp.posix.dumps(0)
+     </code>
+     的含义
+    </p>
+    <h3 id="题目源码">
+     题目源码
+    </h3>
+    <pre class="prettyprint"><code class=" hljs cpp"><span class="hljs-preprocessor">#include&lt;stdio.h&gt;</span>
+<span class="hljs-keyword">void</span> success(){
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">"success\n"</span>);
+}
+<span class="hljs-keyword">void</span> failed(){
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">"failed\n"</span>);
+}
+<span class="hljs-keyword">void</span> next(<span class="hljs-keyword">char</span> *pwd){
+    <span class="hljs-keyword">if</span>(!<span class="hljs-built_in">strcmp</span>(pwd,<span class="hljs-string">"123456"</span>)){
+        success();
+    }<span class="hljs-keyword">else</span>{
+        failed();
+    }
+}
+<span class="hljs-keyword">int</span> main(<span class="hljs-keyword">void</span>){
+    <span class="hljs-keyword">char</span> name[<span class="hljs-number">9</span>];
+    <span class="hljs-keyword">char</span> pwd[<span class="hljs-number">9</span>];
+    <span class="hljs-keyword">char</span> n;
+    <span class="hljs-built_in">scanf</span>(<span class="hljs-string">"%s"</span>,name);
+    <span class="hljs-built_in">scanf</span>(<span class="hljs-string">"%s"</span>,pwd);
+    <span class="hljs-built_in">printf</span>(<span class="hljs-string">"please input n\n"</span>);
+    <span class="hljs-built_in">puts</span>(<span class="hljs-string">"this is puts\n"</span>);
+    n=getchar();
+    <span class="hljs-keyword">if</span>(!<span class="hljs-built_in">strcmp</span>(name,<span class="hljs-string">"jsk"</span>)){
+        next(pwd);
+    }<span class="hljs-keyword">else</span>{
+        <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;
+}</code></pre>
+    <p>
+     这次我多写了一层判断。主要还是来看一下
+     <code>
+      pp.posix.dumps(0)
+     </code>
+     和
+     <code>
+      pp.posix.dumps(1)
+     </code>
+     的区别。我就不多分析了，看结果。
+     <br/>
+     测试脚本
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">from</span> angr <span class="hljs-keyword">import</span> *
+<span class="hljs-keyword">import</span> logging
+<span class="hljs-keyword">import</span> archinfo
+logging.getLogger(<span class="hljs-string">'angr.manager'</span>).setLevel(logging.DEBUG)
+p = Project(<span class="hljs-string">"test2"</span>,auto_load_libs=<span class="hljs-keyword">False</span>)
+state=p.factory.entry_state()
+sm=p.factory.simulation_manager(state,threads=<span class="hljs-number">4</span>)
+res=sm.explore(find=<span class="hljs-number">0x4006BE</span>,avoid=[<span class="hljs-number">0x4006CA</span>,<span class="hljs-number">0x400645</span>])
+<span class="hljs-keyword">if</span> len(res.found) &gt; <span class="hljs-number">0</span>:
+    <span class="hljs-keyword">print</span> res.found[<span class="hljs-number">0</span>].posix.dumps(<span class="hljs-number">0</span>)
+    <span class="hljs-keyword">print</span> <span class="hljs-string">"---"</span>
+    <span class="hljs-keyword">print</span> res.found[<span class="hljs-number">0</span>].posix.dumps(<span class="hljs-number">1</span>)
+    <span class="hljs-keyword">print</span> <span class="hljs-string">"---"</span>
+    <span class="hljs-keyword">print</span> res.found[<span class="hljs-number">0</span>].posix.dumps(<span class="hljs-number">2</span>)
+</code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180514211122129?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     结论
+     <br/>
+     (0)输出的是found执行路径中的所有输入
+     <br/>
+     (1)输出的是found执行路径中的所有输出
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     所以呢，可能还会出现一些理解上的错误，欢迎各路师傅批评指正！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80315365
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7599290" target="_blank">
+    Re
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

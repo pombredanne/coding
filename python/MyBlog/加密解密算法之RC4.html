@@ -1,0 +1,123 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   加密解密算法之RC4
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年04月22日 12:31:50
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：161
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     参考链接：
+     <a href="https://www.biaodianfu.com/rc4.html" rel="nofollow" target="_blank">
+      https://www.biaodianfu.com/rc4.html
+     </a>
+    </p>
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     感觉RC4算法还是很常见的，特此学习下特征。
+     <br/>
+     <a href="https://github.com/anthonywei/rc4" rel="nofollow" target="_blank">
+      https://github.com/anthonywei/rc4
+     </a>
+     各种语言的rc4实现
+    </p>
+    <h3 id="介绍">
+     介绍
+    </h3>
+    <p>
+     RC4算法是一种对称加密算法，所谓对称加密，就是加密和解密的过程是一样的.
+    </p>
+    <pre class="prettyprint"><code class=" hljs ini"><span class="hljs-setting">c=<span class="hljs-value">rc4(key,m)</span></span>
+<span class="hljs-setting">m=<span class="hljs-value">rc4(key,c)</span></span></code></pre>
+    <p>
+     这种对称性是基于密匙流加密的特征。密匙流就是说我的数据是N位，那么我通过一定算法生成N位的数据，然后将其xor得到密文。因为是xor操作，所以同样的可以通过密文，经过同样的key得到明文。因此通过密匙流加密算法的一个很重要的特征就是xor操作。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180422122153429?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180422122217859?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <h3 id="rc4算法的原理">
+     RC4算法的原理
+    </h3>
+    <p>
+     这里借用参考链接中的一张图。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180422122502451?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     第一步：使用KSA算法根据用户输入的key，生成S盒
+     <br/>
+     这一步通常会使用两次for循环，一次是为了将数据转入S盒，第二次是为了将S盒打乱。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180422122838069?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180422122858840?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     从上面的两种实现中可以看出一下共通的地方，在初始化key时所做的操作。
+     <br/>
+     第二步：使用PRGA算法生成密匙流加密数据
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     常见的算法多做下总结！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80037907
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=算法&amp;t=blog" target="_blank">
+    算法
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=加密&amp;t=blog" target="_blank">
+    加密
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=解密&amp;t=blog" target="_blank">
+    解密
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=c语言&amp;t=blog" target="_blank">
+    c语言
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7599290" target="_blank">
+    Re
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

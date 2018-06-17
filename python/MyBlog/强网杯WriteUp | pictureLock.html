@@ -1,0 +1,167 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   强网杯WriteUp | pictureLock
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年03月30日 19:33:54
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：151
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     通往结果的路途是最美好的！珍惜在这过程中你所遇到的人和经历。不负遇见！
+    </p>
+    <h3 id="分析">
+     分析
+    </h3>
+    <p>
+     这道题我感觉只是套了个apk的外壳，一点都没有做Android题目的感觉。本质上是一个aes和一个异或的解密。难受。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180328201006012?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     j()用于获取apk签名的MD5值
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180328201130297?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     关键是这个enc()是一个native方法。动态调。
+     <br/>
+     动态调试可以参考这篇文章
+     <br/>
+     <a href="http://blog.csdn.net/qq_33438733/article/details/79516372" rel="nofollow">
+      http://blog.csdn.net/qq_33438733/article/details/79516372
+     </a>
+     <br/>
+     主要就是这个sub_5fa37a48这个函数
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180328201201975?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     进去之后就是一大堆加密算法。看了下特征，发现一个类似S盒的数据块，猜测是aes加密。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180328201230284?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     fread在读取数据时会按着指定序列读取，这个序列也就是签名的MD5值。这个值可以通过动态调smali的方法拿到。刚开始我用smali插桩的方法，导致我在尝试aes解密的时候，密匙出错，所以卡了很久。因为如果修改了smali，重新打包后签名会变化，所以得到的密匙也就不一样。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180328201255916?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     这是获取二次打包的密钥的截图。正确的密钥其实可以字节从内存中获取。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180328201323308?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     比较关键地方，v32是用于AES的密匙，在这里他做了判断
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180328201343406?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     if ( !(v28 &amp; 1) )
+     <br/>
+     也就是每次的密匙都会发生变化，查看&amp;dword_5FA3C008;和&amp;dword_5FA3C004;的内容可以看到他这里对原本32位的MD5值分别取了前半段和后半段。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180328201449679?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     这一大段就是AES，不用管。(估计应该是用标准的AES进行加密的，如果不是那就GG)
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180328201519434?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     这里就是进行异或加密了，这里只对数据的前16个字节进行了aes加密，而后对剩余的字节进行异或加密。根据加密的过程写出解密代码。
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment"># -*- coding: UTF-8 -*-</span>
+<span class="hljs-keyword">from</span> Crypto.Cipher <span class="hljs-keyword">import</span> AES
+<span class="hljs-keyword">from</span> binascii <span class="hljs-keyword">import</span> b2a_hex
+<span class="hljs-keyword">from</span> binascii <span class="hljs-keyword">import</span> a2b_hex
+<span class="hljs-keyword">from</span> aes_util <span class="hljs-keyword">import</span> *
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">dec_xor_data</span><span class="hljs-params">(cipher)</span>:</span>
+        plain=[]
+        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(<span class="hljs-number">16</span>,len(cipher)):
+                temp=chr(ord(cipher[i]) ^ ord(akey[i%<span class="hljs-number">32</span>]))
+                plain.append(temp)
+        <span class="hljs-keyword">return</span> <span class="hljs-string">""</span>.join(plain)
+akey=<span class="hljs-string">"f8c49056e4ccf9a11e090eaf471f418d"</span>
+dword_5FA3C00C=[<span class="hljs-number">0x66</span>,<span class="hljs-number">0x38</span>,<span class="hljs-number">0x63</span>,<span class="hljs-number">0x34</span>,<span class="hljs-number">0x39</span>,<span class="hljs-number">0x30</span>,<span class="hljs-number">0x35</span>,<span class="hljs-number">0x36</span>,<span class="hljs-number">0x65</span>,<span class="hljs-number">0x34</span>,<span class="hljs-number">0x63</span>,<span class="hljs-number">0x63</span>,<span class="hljs-number">0x66</span>,<span class="hljs-number">0x39</span>,<span class="hljs-number">0x61</span>,<span class="hljs-number">0x31</span>,<span class="hljs-number">0x31</span>,<span class="hljs-number">0x65</span>,<span class="hljs-number">0x30</span>,<span class="hljs-number">0x39</span>,<span class="hljs-number">0x30</span>,<span class="hljs-number">0x65</span>,<span class="hljs-number">0x61</span>,<span class="hljs-number">0x66</span>,<span class="hljs-number">034</span>,<span class="hljs-number">0x37</span>,<span class="hljs-number">0x31</span>,<span class="hljs-number">0x66</span>,<span class="hljs-number">0x34</span>,<span class="hljs-number">0x31</span>,<span class="hljs-number">0x38</span>,<span class="hljs-number">0x64</span>]
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">main</span><span class="hljs-params">()</span>:</span>
+        fp_enc=open(<span class="hljs-string">"flag.jpg.lock"</span>,<span class="hljs-string">"rb"</span>)
+        fp_dec=open(<span class="hljs-string">"de.jpg"</span>,<span class="hljs-string">"wb"</span>)
+        i=<span class="hljs-number">0</span>
+        <span class="hljs-keyword">while</span> <span class="hljs-number">1</span>:
+                v24 = ord(akey[i&amp;<span class="hljs-number">0x1f</span>])
+                cipher=fp_enc.read(v24)
+                cipher_aes=b2a_hex(cipher[:<span class="hljs-number">16</span>])
+                <span class="hljs-keyword">if</span>  (v24&amp;<span class="hljs-number">0x1</span>)==<span class="hljs-number">0</span>:
+                        hkey=akey[:<span class="hljs-number">16</span>]
+                        plain_aes=decrypt_ECB(cipher_aes,hkey)
+                <span class="hljs-keyword">else</span>:
+                        hkey=akey[<span class="hljs-number">16</span>:]
+                        plain_aes=decrypt_ECB(cipher_aes,hkey)
+                <span class="hljs-keyword">if</span> len(plain_aes) &lt; <span class="hljs-number">16</span>:
+                        plain_aes+=chr(<span class="hljs-number">0</span>)*(<span class="hljs-number">16</span>-len(plain_aes))
+                fp_dec.write(plain_aes)
+                plain_xor=dec_xor_data(cipher)
+                fp_dec.write(plain_xor)
+                i=i+<span class="hljs-number">1</span>
+                <span class="hljs-keyword">if</span> len(cipher)&lt;<span class="hljs-number">1</span>:
+                        <span class="hljs-keyword">break</span>
+        fp_dec.close()        
+<span class="hljs-keyword">if</span> __name__==<span class="hljs-string">"__main__"</span>:
+        main()
+</code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     这题最难的地方是解aes加密，刚开始也不确定，所以就自己加密了一张图片，然后测试前16个字节进行比对。拿github上的aes尝试了一下，不对，然后找了一个python的解密脚本，成了！
+     <br/>
+     最后解密图片，拿到flag
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79733233
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=android&amp;t=blog" target="_blank">
+    android
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=解密&amp;t=blog" target="_blank">
+    解密
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

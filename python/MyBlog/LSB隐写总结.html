@@ -1,0 +1,164 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   LSB隐写总结
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年02月14日 11:18:15
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：374
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     又是一年的情人节！
+     <br/>
+     单身狗表示不关我事-.- 写篇博文祝贺庆祝下。
+    </p>
+    <h3 id="一lsb简介">
+     一、LSB简介
+    </h3>
+    <p>
+     LSB(英文 least significant bit)即最低有效位。LSB加密是信息隐藏中最基本的方法。由于人们识别声音或图片的能力有限，因此我们稍微改动信息的某一位是不会影响我们识别声音或图片的。
+    </p>
+    <h3 id="二用法">
+     二、用法
+    </h3>
+    <p>
+     通常来说LSB加密用在无损压缩的数据格式文件中，例如图像中的bmp格式和音频的wav格式。由于这两种格式未对源数据进行有损压缩，因此可以将信息隐藏起来。
+    </p>
+    <h4 id="bmp文件中的使用">
+     <strong>
+      <em>
+       BMP文件中的使用
+      </em>
+     </strong>
+    </h4>
+    <p>
+     对于图像文件LSB的特征很明显，通常将信息隐藏在某一个颜色通道中。我们可以查看图片的每个像素点的RGB值，或者使用stegsolve工具进行查看。
+     <br/>
+     由于图像是由像素构成的，每个像素有8位(对于BMP图像来说),通常最后一位的变化，通过肉眼是无法察觉的
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180214075231981?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     MSB是最高有效位，Bit Plane Order代表颜色的排序方式
+    </p>
+    <h4 id="wav文件中的使用">
+     <strong>
+      <em>
+       WAV文件中的使用
+      </em>
+     </strong>
+    </h4>
+    <p>
+     对于WAV文件来说LSB的隐藏没有那么明显，但我们同样可以类比BMP图像中的方法，这里我那国外的一道隐写题为例。
+     <br/>
+     <a href="https://ethackal.github.io/resources/derbycon-ctf-wav-steganography/Assignment1.wav" rel="nofollow" target="_blank">
+      题目文件
+     </a>
+     <br/>
+     首先说明一点，这题使用ruby解的，所以最好先去了解一下ruby语言。
+     <br/>
+     主要利用的就是ruby中的
+     <a href="https://github.com/shokai/ruby-wav-file" rel="nofollow" target="_blank">
+      wav-file
+     </a>
+     模块。
+     <br/>
+     基本上看懂wav-file模块就可以了。
+     <br/>
+     首先我们读取文件，利用模块查看文件的基本信息
+    </p>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">f = <span class="hljs-built_in">open</span>(<span class="hljs-string">"input.wav"</span>)
+<span class="hljs-built_in">format</span> = WavFile::readFormat(f)
+dataChunk = WavFile::readDataChunk(f)
+f.<span class="hljs-built_in">close</span></code></pre>
+    <p>
+     基本信息：
+    </p>
+    <pre class="prettyprint"><code class=" hljs mathematica"><span class="hljs-keyword">Format</span> ID:      <span class="hljs-number">1</span>
+Channels:       <span class="hljs-number">2</span>
+Sampling Ratio: <span class="hljs-number">44100</span> (Hz)
+<span class="hljs-keyword">Byte</span> per <span class="hljs-keyword">Sec</span>:   <span class="hljs-number">176400</span>
+Bit per Sample: <span class="hljs-number">16</span>
+<span class="hljs-keyword">Block</span> Size:     <span class="hljs-number">4</span></code></pre>
+    <p>
+     根据提示可知使用”s*”进行解包
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl">bit = <span class="hljs-string">'s*'</span> <span class="hljs-keyword">if</span> <span class="hljs-keyword">format</span>.bitPerSample == <span class="hljs-number">16</span> <span class="hljs-comment"># int16_t</span>
+bit = <span class="hljs-string">'c*'</span> <span class="hljs-keyword">if</span> <span class="hljs-keyword">format</span>.bitPerSample == <span class="hljs-number">8</span> <span class="hljs-comment"># signed char</span>
+wavs = dataChunk.data.<span class="hljs-keyword">unpack</span>(bit) <span class="hljs-comment"># read binary</span></code></pre>
+    <p>
+     解包后使用map进行字符串的拼接，对于WAV文件来说LSB位于第一位
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl">wavs = wavs.<span class="hljs-keyword">map</span>{|w| w[<span class="hljs-number">0</span>]}.<span class="hljs-keyword">join</span></code></pre>
+    <p>
+     最后在对得到的数据重新进行打包
+    </p>
+    <pre class="prettyprint"><code class=" hljs ini"><span class="hljs-setting">flag=<span class="hljs-value">[wavs].pack(<span class="hljs-string">"b*"</span>)</span></span></code></pre>
+    <p>
+     最后就可得到想要的东西了。！
+     <br/>
+     <strong>
+      <em>
+       ruby我懂的也不是很多,主要是python的wave模块的处理没有ruby处理来的直接，因此这里采用ruby,大家觉得自己python学的不错，完全可以用python来解决
+      </em>
+     </strong>
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     祝大家情人节快乐！单身狗的忧伤。-
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79324763
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=LSB&amp;t=blog" target="_blank">
+    LSB
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=CTF&amp;t=blog" target="_blank">
+    CTF
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

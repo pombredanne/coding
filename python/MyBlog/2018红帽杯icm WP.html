@@ -1,0 +1,121 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   2018红帽杯icm WP
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年05月02日 14:48:37
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：35
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     这题基本上就考察一个idea算法。简单分析一下程序，可以知道flag长度为42。显示使用idea进行加密，然后hex-&gt;逆序-&gt;异或
+    </p>
+    <h3 id="过程">
+     过程
+    </h3>
+    <p>
+     这题的难点还是在idea算法的解密上。刚开始也不知道是什么加密方式。
+     <br/>
+     无独有偶，看到了这个奇怪的字符串。然后百度了一下，发现是idea算法。
+    </p>
+    <p>
+     但是有关这个算法的相关的资料很少，只找到了c的源程序，自己编译了一下，刚开始尝试发现找不到密匙，不对，于是IDA打开，进行比对。最终确定为idea
+    </p>
+    <p>
+     因为idea是在des基础上的扩展。属于对称加密。
+    </p>
+    <p>
+     了解到程序中自带了解密函数后就舒服多了。patch一下远程需。逆推到idea加密后的那一步。然后使用icm-decrypt进行手工解密。我个人不喜欢完整的脚本。附上部分代码
+     <br/>
+     for i in range(48):
+     <br/>
+     for j in range(256):
+     <br/>
+     if (119-i)^j==byte_203040[i]:
+     <br/>
+     flag.append(j)
+     <br/>
+     # flag.append(hex(j).replace(“0x”,”“))
+     <br/>
+     break
+    </p>
+    <p>
+     for i in range(47,-1,-1): #8-1
+     <br/>
+     temp.append(hex((i%8+1)^flag[j]).replace(“0x”,”“))
+     <br/>
+     j=j+1
+     <br/>
+     print temp
+     <br/>
+     temp=[‘af’, ‘91’, ‘d8’, ‘ed’, ‘ba’, ‘9’, ‘28’, ‘25’, ‘5a’, ‘8d’, ‘81’, ‘5a’, ‘3e’, ‘2d’, ‘6’, ‘55’, ‘21’, ‘af’, ‘bc’, ‘d4’, ‘26’, ‘61’, ‘7f’, ‘8d’, ‘b4’, ‘42’, ‘98’, ‘d5’, ‘ce’, ‘7c’, ‘24’, ‘42’, ‘3f’, ‘af’, ‘66’, ‘cd’, ‘bd’, ‘55’, ‘1f’, ‘d6’, ‘ca’, ‘de’, ‘d8’, ‘15’, ‘f7’, ‘d3’, ‘3b’, ‘3c’]
+     <br/>
+     每8位逆序一下，然后待会到解密函数中。即可解出flag，最后两位好像是需要猜测。
+     <br/>
+     flag{f53fc1db-b7d3-4643-9b48-725f13129d07}
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     中间过程好多图丢了2333333.
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80166445
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=idea&amp;t=blog" target="_blank">
+    idea
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=算法&amp;t=blog" target="_blank">
+    算法
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=加密&amp;t=blog" target="_blank">
+    加密
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7599290" target="_blank">
+    Re
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

@@ -1,0 +1,86 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   IDA的Oops! internal error 20099 occured
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年03月12日 20:49:11
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：196
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     今天我在调试一个app，脱壳的时候发现了一个IDA7.0的一个BUG。
+    </p>
+    <pre class="prettyprint"><code class=" hljs cs">Oops! <span class="hljs-keyword">internal</span> error 20099 occured.</code></pre>
+    <h3 id="问题描述">
+     问题描述
+    </h3>
+    <p>
+     由于APK使用了多线程进行轮询proc/[pid]/status中的ptrace状态，所以会有多次的fopen和fgets操作。我在这两处下断点。
+     <br/>
+     在IDA7.0中，仅仅执行了一次，便出错退出，同时android_server出错退出
+    </p>
+    <h3 id="解决办法">
+     解决办法
+    </h3>
+    <p>
+     我尝试使用IDA6.8使用同样的操作，成功进行了多次轮询。所以这里还是用IDA6.8的好
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     不同版本都有各自的优势吧，IDA7.0更加友好，一些出错信息都会弹框提示用户，但IDA6.8总体比较稳定。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79532655
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=android&amp;t=blog" target="_blank">
+    android
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=bug&amp;t=blog" target="_blank">
+    bug
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

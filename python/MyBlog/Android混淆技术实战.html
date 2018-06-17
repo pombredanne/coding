@@ -1,0 +1,242 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   Android混淆技术实战
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年02月27日 20:38:34
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：38
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     总所周知，apk如果不加一些保护措施，那么可以被轻易的破解。自己辛辛苦苦写的代码，在一些人眼里几乎透明的如同源码。因此我们常常会使用混淆技术，增加破解的难度，同时也可以尽可能的压缩apk文件的大小。
+     <br/>
+     <strong>
+      <em>
+       今天，我就来实战一下
+      </em>
+     </strong>
+    </p>
+    <h3 id="一代码混淆">
+     一、代码混淆
+    </h3>
+    <p>
+     首先会涉及到build.gradle这个配置文件。
+    </p>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">signingConfigs {
+        jsk_sign {
+            keyAlias <span class="hljs-string">'key0'</span>
+            keyPassword <span class="hljs-string">'123456'</span>
+            storeFile <span class="hljs-built_in">file</span>(<span class="hljs-string">'D:/JavaSE/jsk_sign.store'</span>)
+            storePassword <span class="hljs-string">'123456'</span>
+        }
+    }</code></pre>
+    <pre class="prettyprint"><code class=" hljs cs">buildTypes {
+        debug {
+            <span class="hljs-comment">//显示log</span>
+            buildConfigField <span class="hljs-string">"boolean"</span>, <span class="hljs-string">"LOG_DEBUG"</span>, <span class="hljs-string">"true"</span>
+            versionNameSuffix <span class="hljs-string">"-debug"</span>
+            minifyEnabled <span class="hljs-keyword">false</span>
+            zipAlignEnabled <span class="hljs-keyword">false</span>
+            shrinkResources <span class="hljs-keyword">false</span>
+            debuggable <span class="hljs-keyword">true</span>
+        }
+        release {
+            <span class="hljs-comment">// 不显示Log</span>
+            buildConfigField <span class="hljs-string">"boolean"</span>, <span class="hljs-string">"LOG_DEBUG"</span>, <span class="hljs-string">"false"</span>
+            <span class="hljs-comment">//混淆</span>
+            minifyEnabled <span class="hljs-keyword">true</span>
+            <span class="hljs-comment">//Zipalign优化</span>
+            zipAlignEnabled <span class="hljs-keyword">true</span>
+            <span class="hljs-comment">// 移除无用的resource文件</span>
+            shrinkResources <span class="hljs-keyword">true</span>
+            <span class="hljs-comment">//加载默认混淆配置文件</span>
+            proguardFiles getDefaultProguardFile(<span class="hljs-string">'proguard-android.txt'</span>), <span class="hljs-string">'proguard-rules.pro'</span>
+            <span class="hljs-comment">//签名</span>
+            signingConfig signingConfigs.jsk_sign
+        }
+    }</code></pre>
+    <p>
+     添加这两个部分，签名的配置可以按着自己的喜好来。
+     <code>
+      minifyEnabled true
+     </code>
+     代码混淆的开关，默认的基础配置文件为
+     <code>
+      proguard-android.txt
+     </code>
+     ，如果需要进行添加规则只需在
+     <code>
+      proguard-rules.pro
+     </code>
+     中进行添加即可。
+     <br/>
+     规则这部分我只能提供一个模板，仅供参考。
+    </p>
+    <pre class="prettyprint"><code class=" hljs php"><span class="hljs-comment"># 代码混淆压缩比，在0~7之间，默认为5，一般不做修改</span>
+-optimizationpasses <span class="hljs-number">5</span>
+
+<span class="hljs-comment"># 混合时不使用大小写混合，混合后的类名为小写</span>
+-dontusemixedcaseclassnames
+
+<span class="hljs-comment"># 指定不去忽略非公共库的类</span>
+-dontskipnonpubliclibraryclasses
+
+<span class="hljs-comment"># 这句话能够使我们的项目混淆后产生映射文件</span>
+<span class="hljs-comment"># 包含有类名-&gt;混淆后类名的映射关系</span>
+-verbose
+
+<span class="hljs-comment"># 指定不去忽略非公共库的类成员</span>
+-dontskipnonpubliclibraryclassmembers
+
+<span class="hljs-comment"># 不做预校验，preverify是proguard的四个步骤之一，Android不需要preverify，去掉这一步能够加快混淆速度。</span>
+-dontpreverify
+
+
+<span class="hljs-comment">#如果有引用v4包可以添加下面这行</span>
+-keep <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">android</span>.<span class="hljs-title">support</span>.<span class="hljs-title">v4</span>.** {</span> *; }
+-keep <span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> * <span class="hljs-keyword">extends</span> <span class="hljs-title">android</span>.<span class="hljs-title">support</span>.<span class="hljs-title">v4</span>.**
+-<span class="hljs-title">keep</span> <span class="hljs-title">public</span> <span class="hljs-title">class</span> * <span class="hljs-keyword">extends</span> <span class="hljs-title">android</span>.<span class="hljs-title">app</span>.<span class="hljs-title">Fragment</span>
+
+
+#如果引用了<span class="hljs-title">v4</span>或者<span class="hljs-title">v7</span>包，可以忽略警告，因为用不到<span class="hljs-title">android</span>.<span class="hljs-title">support</span>
+-<span class="hljs-title">dontwarn</span> <span class="hljs-title">android</span>.<span class="hljs-title">support</span>.**
+
+
+
+#保持自定义组件不被混淆
+#-<span class="hljs-title">keep</span> <span class="hljs-title">public</span> <span class="hljs-title">class</span> * <span class="hljs-keyword">extends</span> <span class="hljs-title">android</span>.<span class="hljs-title">view</span>.<span class="hljs-title">View</span> {</span>
+<span class="hljs-comment">#    public &lt;init&gt;(android.content.Context);</span>
+<span class="hljs-comment">#    public &lt;init&gt;(android.content.Context, android.util.AttributeSet);</span>
+<span class="hljs-comment">#    public &lt;init&gt;(android.content.Context, android.util.AttributeSet, int);</span>
+<span class="hljs-comment">#    public void set*(...);</span>
+<span class="hljs-comment">#}</span></code></pre>
+    <p>
+     更多规则尽情百度！
+    </p>
+    <h3 id="二资源混淆">
+     二、资源混淆
+    </h3>
+    <p>
+     可以参考微信的开源工具
+     <a href="https://github.com/shwenzhang/AndResGuard" rel="nofollow" target="_blank">
+      AndResGuard
+     </a>
+     <br/>
+     github上提供了几种实现方法。我选取其中一种我实现了的方法进行说明。
+     <br/>
+     首先下载
+     <code>
+      7z
+     </code>
+     解压缩软件，然后git clone 整个项目，在
+     <code>
+      tool_output
+     </code>
+     目录中修改
+     <code>
+      build_apk.bat
+     </code>
+     文件。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180227202526944?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     其中config.xml是具体的配置文件，.sh文件是在linux下的，windows用户只需修改.bat即可
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm"><span class="hljs-keyword">set</span> jdkpath=D:\JavaSE\jre\bin\java<span class="hljs-preprocessor">.exe</span>
+<span class="hljs-keyword">set</span> storepath=jsk_sign<span class="hljs-preprocessor">.store</span>
+<span class="hljs-keyword">set</span> storepass=<span class="hljs-number">123456</span>
+<span class="hljs-keyword">set</span> keypass=<span class="hljs-number">123456</span>
+<span class="hljs-keyword">set</span> alias=key0
+<span class="hljs-keyword">set</span> zipalign=D:\JavaSE\asdk\build-tools\<span class="hljs-number">25.0</span><span class="hljs-number">.3</span>\zipalign<span class="hljs-preprocessor">.exe</span>
+<span class="hljs-string">"%jdkpath%"</span> -jar AndResGuard-<span class="hljs-keyword">cli</span>-<span class="hljs-number">1.2</span><span class="hljs-number">.10</span><span class="hljs-preprocessor">.jar</span> input<span class="hljs-preprocessor">.apk</span> -config config<span class="hljs-preprocessor">.xml</span> -<span class="hljs-keyword">out</span> outapk -signature <span class="hljs-string">"%storepath%"</span> <span class="hljs-string">"%storepass%"</span> <span class="hljs-string">"%keypass%"</span> <span class="hljs-string">"%alias%"</span> -zipalign <span class="hljs-string">"%zipalign%"</span> -<span class="hljs-number">7</span>zip <span class="hljs-string">"D:\7z\7-Zip\7z.exe"</span>
+pause
+</code></pre>
+    <p>
+     设置jdk和zipalign的路径,最好将签名文件放在同一目录下。
+     <br/>
+     这里需要注意的是jdk的版本，否则会报错哦，如果都设置正确，但一直报错很可能是版本的问题。
+     <br/>
+     设置完成后，双击bat文件即可，会在当前目录下生成outapk文件
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180227203326735?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <code>
+      temp
+     </code>
+     是未混淆前的资源，
+     <code>
+      r
+     </code>
+     为混淆后的资源，
+     <code>
+      resource_mapping_input.txt
+     </code>
+     为混淆前和混淆后的资源匹配列表，以及签名后的apk，未签名的apk还有源文件。
+     <br/>
+     尝试反编译。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180227203616865?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     在这里简单的记录下混淆的过程，不涉及什么原理。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79393002
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=android&amp;t=blog" target="_blank">
+    android
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=技术&amp;t=blog" target="_blank">
+    技术
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

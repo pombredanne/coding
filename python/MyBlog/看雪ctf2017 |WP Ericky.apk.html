@@ -1,0 +1,222 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   看雪ctf2017 |WP Ericky.apk
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年04月07日 18:33:15
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：15
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     参考文章
+     <br/>
+     <a href="https://blog.csdn.net/wmh_100200/article/details/73368859" rel="nofollow" target="_blank">
+      https://blog.csdn.net/wmh_100200/article/details/73368859
+     </a>
+     <br/>
+     <a href="https://bbs.pediy.com/thread-218455.htm" rel="nofollow" target="_blank">
+      https://bbs.pediy.com/thread-218455.htm
+     </a>
+    </p>
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     看雪的ctf还是很有水平的，我这菜鸡表示只能看看
+    </p>
+    <h3 id="分析">
+     分析
+    </h3>
+    <p>
+     用jeb打开，发现做了很恶心的混淆，汗颜。使用n键对变量重命名。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180405142558325?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     java层的分析我就不写了，这题的考点在于so层算法的分析以及指令的混淆。
+     <br/>
+     <strong>
+      <em>
+       ps:我几乎用了一天的时间，去看这个check函数
+      </em>
+     </strong>
+    </p>
+    <h3 id="去除指令混淆">
+     去除指令混淆
+    </h3>
+    <p>
+     要么手动的patch要么写个脚本去除，我看还是写个脚本吧，我刚开始手动patch，实在是太累了！！！
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl"><span class="hljs-comment">#include &lt;idc.idc&gt;</span>
+
+static main()
+{
+    auto i,<span class="hljs-keyword">pos</span>,size,JMP_SIZE,FLOWER1_SIZE,FLOWER2_SIZE;
+    <span class="hljs-keyword">pos</span>=<span class="hljs-number">0x286C</span>; <span class="hljs-regexp">//</span>START
+    size=<span class="hljs-number">0x1A000</span>;<span class="hljs-regexp">//</span>SIZE
+    JMP_SIZE = <span class="hljs-number">0x40</span>;
+    FLOWER1_SIZE = <span class="hljs-number">0x1e</span>;
+    FLOWER2_SIZE = <span class="hljs-number">0x8</span>;
+
+
+    <span class="hljs-keyword">for</span> ( i=<span class="hljs-number">0</span>; i &lt; size;i++ ) {
+        <span class="hljs-regexp">//</span>PATCH JMPS
+        <span class="hljs-keyword">if</span> (
+            (Byte(<span class="hljs-keyword">pos</span>)==<span class="hljs-number">0x13</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">1</span>)==<span class="hljs-number">0xe0</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">2</span>)==<span class="hljs-number">0xbd</span>)&amp;&amp;
+            (Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">3</span>)==<span class="hljs-number">0xe8</span>)&amp;&amp; (Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">4</span>)==<span class="hljs-number">0xf0</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">5</span>)==<span class="hljs-number">0x47</span>))
+        {
+            <span class="hljs-keyword">for</span>(i=<span class="hljs-number">0</span>;i&lt;JMP_SIZE;i++)
+            {
+                PatchByte(<span class="hljs-keyword">pos</span>+i,<span class="hljs-number">0x0</span>);<span class="hljs-regexp">//change</span>
+            }
+            HideArea(<span class="hljs-keyword">pos</span>,<span class="hljs-keyword">pos</span>+JMP_SIZE,atoa(<span class="hljs-keyword">pos</span>),atoa(<span class="hljs-keyword">pos</span>),atoa(<span class="hljs-keyword">pos</span>+JMP_SIZE),-<span class="hljs-number">1</span>);
+            <span class="hljs-keyword">continue</span>;
+        }
+
+        // PATCH FLOWER1
+        //.text:<span class="hljs-number">00002</span>A8<span class="hljs-number">0</span> B1 B5                       PUSH            {R<span class="hljs-number">0</span>,R4,R5,R7,LR}
+        //.text:<span class="hljs-number">00002</span>A82 <span class="hljs-number">82</span> B<span class="hljs-number">0</span>                       SUB             SP, SP, <span class="hljs-comment">#8</span>
+        //.text:<span class="hljs-number">00002</span>A84 <span class="hljs-number">12</span> <span class="hljs-number">46</span>                       MOV             R2, R2
+        //.text:<span class="hljs-number">00002</span>A86 <span class="hljs-number">02</span> B<span class="hljs-number">0</span>                       ADD             SP, SP, <span class="hljs-comment">#8</span>
+        //.text:<span class="hljs-number">00002</span>A88 <span class="hljs-number">00</span> F1 <span class="hljs-number">01</span> <span class="hljs-number">00</span>                 ADD.W           R<span class="hljs-number">0</span>, R<span class="hljs-number">0</span>, <span class="hljs-comment">#1</span>
+        //.text:<span class="hljs-number">00002</span>A8C A<span class="hljs-number">0</span> F1 <span class="hljs-number">01</span> <span class="hljs-number">00</span>                 SUB.W           R<span class="hljs-number">0</span>, R<span class="hljs-number">0</span>, <span class="hljs-comment">#1</span>
+        //.text:<span class="hljs-number">00002</span>A9<span class="hljs-number">0</span> <span class="hljs-number">1</span>B <span class="hljs-number">46</span>                       MOV             R3, R3
+        //.text:<span class="hljs-number">00002</span>A92 BD E8 B1 <span class="hljs-number">40</span>                 POP.W           {R<span class="hljs-number">0</span>,R4,R5,R7,LR}
+        //.text:<span class="hljs-number">00002</span>A96 <span class="hljs-number">01</span> F1 <span class="hljs-number">01</span> <span class="hljs-number">01</span>                 ADD.W           R1, R1, <span class="hljs-comment">#1</span>
+        //.text:<span class="hljs-number">00002</span>A9A A1 F1 <span class="hljs-number">01</span> <span class="hljs-number">01</span>                 SUB.W           R1, R1, <span class="hljs-comment">#1</span>
+
+        <span class="hljs-keyword">if</span> (
+            (Byte(<span class="hljs-keyword">pos</span>)==<span class="hljs-number">0xb1</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">1</span>)==<span class="hljs-number">0xb5</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">2</span>)==<span class="hljs-number">0x82</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">3</span>)==<span class="hljs-number">0xb0</span>)&amp;&amp;
+            (Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">0x1a</span>)==<span class="hljs-number">0xa1</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">0x1b</span>)==<span class="hljs-number">0xf1</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">0x1c</span>)==<span class="hljs-number">0x01</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">0x1d</span>)==<span class="hljs-number">0x01</span>))
+        {
+            <span class="hljs-keyword">for</span>(i=<span class="hljs-number">0</span>;i&lt;FLOWER1_SIZE;i++)
+            {
+                PatchByte(<span class="hljs-keyword">pos</span>+i,<span class="hljs-number">0x0</span>);
+            }
+            HideArea(<span class="hljs-keyword">pos</span>,<span class="hljs-keyword">pos</span>+FLOWER1_SIZE,atoa(<span class="hljs-keyword">pos</span>),atoa(<span class="hljs-keyword">pos</span>),atoa(<span class="hljs-keyword">pos</span>+FLOWER1_SIZE),-<span class="hljs-number">1</span>);
+            <span class="hljs-keyword">continue</span>;
+        }
+
+        //PATCH FLOWER2
+        // <span class="hljs-string">"PUSH.W {R4-R10,LR}"</span>
+        // <span class="hljs-string">"POP.W {R4-R10,LR}"</span>
+
+        <span class="hljs-keyword">if</span> (
+            (Byte(<span class="hljs-keyword">pos</span>)==<span class="hljs-number">0x2d</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">1</span>)==<span class="hljs-number">0xe9</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">2</span>)==<span class="hljs-number">0xf0</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">3</span>)==<span class="hljs-number">0x47</span>)&amp;&amp;
+            (Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">4</span>)==<span class="hljs-number">0xbd</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">5</span>)==<span class="hljs-number">0xe8</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">6</span>)==<span class="hljs-number">0xf0</span>)&amp;&amp;(Byte(<span class="hljs-keyword">pos</span>+<span class="hljs-number">7</span>)==<span class="hljs-number">0x47</span>))
+        {
+            <span class="hljs-keyword">for</span>(i=<span class="hljs-number">0</span>;i&lt;FLOWER2_SIZE;i++)
+            {
+                PatchByte(<span class="hljs-keyword">pos</span> +i,<span class="hljs-number">0x0</span>);
+            }
+            HideArea(<span class="hljs-keyword">pos</span>,<span class="hljs-keyword">pos</span>+FLOWER2_SIZE,atoa(<span class="hljs-keyword">pos</span>),atoa(<span class="hljs-keyword">pos</span>),atoa(<span class="hljs-keyword">pos</span>+FLOWER2_SIZE),-<span class="hljs-number">1</span>);
+            <span class="hljs-keyword">continue</span>;
+        }
+        <span class="hljs-keyword">pos</span>++;
+    }
+
+    Message(<span class="hljs-string">"\n"</span> + <span class="hljs-string">"DE-FLOWERS FINISH BY Ericky\n"</span>);
+}</code></pre>
+    <h3 id="重新create-function">
+     重新create function
+    </h3>
+    <p>
+     手动的删除check和jni_load中间的函数，然后重新create_function，之后便可以使用F5反汇编了。虽然仍存在很多混淆指令，但这样已经可以看到check的整个代码了。
+     <br/>
+     可以使用流程图，看整个函数的执行过程
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180407180601084?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180407180614552?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180407180630239?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180407180642589?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     接下来就是需要动态调试去跟了。
+    </p>
+    <h3 id="动态调试">
+     动态调试
+    </h3>
+    <p>
+     由于我们修改了so文件，因此在加载的时候要注意。使ida加载本地的so，而不是手机中的so（只需要默认选择就好）
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180407181003616?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     经过初始化后可以看到该值，这一串字符就是最终我们需要匹配的。也就是最后的密文。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180407181714091?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <pre class="prettyprint"><code class=" hljs ">19931012应该就是加密的密匙</code></pre>
+    <p>
+     最后分析算法(可能也是猜测吧，分析是不可能的，永远也不可能的！)，可以知道为rc4算法，找一个在线rc4加解密的网站。最后可以解得密码
+     <code>
+      madebyericky94528
+     </code>
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     可以说这题折腾了很久，但是最终还是没有整出来，一方面是对指令混淆不熟，说白了也就是对arm指令不熟，另一方面就是对各种算法的反汇编不熟悉，真的很难。而且这两天我心情也不好，很难静下心来仔细的分析。这篇文章匆匆写下，其实那个rc4算法我还是没有看懂，而且密匙为什么是199931012而不是199310124853呢？问题还有很多，我不想折腾了。算法看重的不是加密的过程，而是注意输入和输出，抓住这两点，那么即使这个算法你识别不出来，也是可以看懂的。
+     <br/>
+     这两天心情真的是糟透了，每天都活的很累，好好的假期，每天却如同末日一般。我的心悬在高处，只能用枯燥的指令占据我的逻辑。
+     <br/>
+     <strong>
+      <em>
+       程序员是孤独的，因为很少有人能懂他在干什么。不奢求别人能懂，只希望在放松的时候能有人嘘寒问暖 –2018.4.7
+      </em>
+     </strong>
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79843768
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=算法&amp;t=blog" target="_blank">
+    算法
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=wp&amp;t=blog" target="_blank">
+    wp
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

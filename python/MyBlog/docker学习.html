@@ -1,0 +1,145 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   docker学习
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年05月27日 09:02:06
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：43
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     ciscn2018要求设计一个pwn或者web场景。emmmm…23333333
+     <br/>
+     开发？不存在的！这辈子都不会搞开发的！这一波主要还是学习了docker的使用，一起来入个门吧！
+    </p>
+    <h3 id="安装">
+     安装
+    </h3>
+    <p>
+     环境：ubuntu16.04(我推荐使用ubuntu)
+     <br/>
+     <a href="https://docs.docker.com/" rel="nofollow">
+      官方文档
+     </a>
+     <br/>
+     使用
+     <code>
+      apt-get install docker.io
+     </code>
+     即可快速的安装docker
+     <br/>
+     <code>
+      docker --version
+     </code>
+     查看docker的版本号
+    </p>
+    <pre class="prettyprint"><code class=" hljs mel">docker run hello-world 测试docker能否正常运行
+docker <span class="hljs-keyword">image</span> <span class="hljs-keyword">ls</span>     列出本机中所有的<span class="hljs-keyword">image</span>
+docker ps -a        列出运行中的docker容器
+docker <span class="hljs-keyword">container</span> <span class="hljs-keyword">ls</span>   列出所有<span class="hljs-keyword">container</span></code></pre>
+    <h3 id="创建一个container">
+     创建一个Container
+    </h3>
+    <p>
+     这里需要编写dockerfile，这是docker的主要配置文件
+     <br/>
+     <a href="https://github.com/Eadom/ctf_xinetd" rel="nofollow">
+      ctf_xinetd
+     </a>
+     一个ctf相关的docker配置
+     <br/>
+     在dockerfile中首先需要导入一个基础镜像
+     <br/>
+     随后需要更新系统，创建工作目录并对需要使用到的文件做一个迁移，添加可执行权限
+     <br/>
+     通过执行start.sh启动服务。
+     <br/>
+     查看代码主要是通过过init.d/xinetd来启动
+    </p>
+    <pre class="prettyprint"><code class=" hljs bash"><span class="hljs-shebang">#!/bin/sh</span>
+<span class="hljs-comment"># Add your startup script</span>
+
+<span class="hljs-comment"># DO NOT DELETE</span>
+/etc/init.d/xinetd start;
+sleep infinity;</code></pre>
+    <p>
+     需要查看ctf.xinetd代码
+    </p>
+    <pre class="prettyprint"><code class=" hljs bash">service ctf
+{
+    disable = no
+    socket_<span class="hljs-built_in">type</span> = stream
+    protocol    = tcp
+    wait        = no
+    user        = root
+    <span class="hljs-built_in">type</span>        = UNLISTED
+    port        = <span class="hljs-number">9999</span>
+    <span class="hljs-built_in">bind</span>        = <span class="hljs-number">0.0</span>.<span class="hljs-number">0.0</span>
+    server      = /usr/sbin/chroot
+    <span class="hljs-comment"># replace helloworld to your program</span>
+    server_args = --userspec=<span class="hljs-number">1000</span>:<span class="hljs-number">1000</span> /home/ctf ./helloworld
+    banner_fail = /etc/banner_fail
+    <span class="hljs-comment"># safety options</span>
+    per_<span class="hljs-built_in">source</span>  = <span class="hljs-number">10</span> <span class="hljs-comment"># the maximum instances of this service per source IP address</span>
+    rlimit_cpu  = <span class="hljs-number">20</span> <span class="hljs-comment"># the maximum number of CPU seconds that the service may use</span>
+    <span class="hljs-comment">#rlimit_as  = 1024M # the Address Space resource limit for the service</span>
+    <span class="hljs-comment">#access_times = 2:00-9:00 12:00-24:00</span>
+}</code></pre>
+    <p>
+     需要修改的地方并不多，port，server_args，user，protocol等一些参数，看各自的需求修改即可。同样可以运行python的服务。
+     <br/>
+     在当前目录下build
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso">docker build <span class="hljs-attribute">-t</span> <span class="hljs-string">"helloworld"</span> <span class="hljs-built_in">.</span> </code></pre>
+    <p>
+     运行一个镜像，注意端口映射。
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso">docker run <span class="hljs-attribute">-d</span> <span class="hljs-attribute">-p</span> <span class="hljs-string">"0.0.0.0:pubport:9999"</span> <span class="hljs-attribute">-h</span> <span class="hljs-string">"helloworld"</span> <span class="hljs-subst">--</span>name<span class="hljs-subst">=</span><span class="hljs-string">"helloworld"</span> helloworld</code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     这里写的也不多，还有很多基础的东西都没有写，我也没有很系统的学，只是刚好国赛需要使用docker开发场景，就边学边用。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80423494
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

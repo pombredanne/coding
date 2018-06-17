@@ -1,0 +1,110 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   angr学习【二】
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年05月13日 16:26:44
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：49
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     这篇文章是一定要写的，虽然可能还不是很明白。
+    </p>
+    <h3 id="题目二">
+     题目二
+    </h3>
+    <p>
+     题目
+     <a href="https://github.com/angr/angr-doc/tree/master/examples/ais3_crackme" rel="nofollow">
+      https://github.com/angr/angr-doc/tree/master/examples/ais3_crackme
+     </a>
+     <br/>
+     IDA看一下，需要从命令行进行输入。那么就需要使用到claripy这个模块。
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl">claripy.BVS(<span class="hljs-string">'arg1'</span>, n<span class="hljs-variable">*8</span>) 构造输入参数长度为<span class="hljs-number">8</span>bytes
+entry_state方法接受一个args参数来控制输入
+proj = angr.Project(<span class="hljs-string">"./ais3_crackme"</span>)
+args = [proj.filename, claripy.BVS(<span class="hljs-string">'arg1'</span>, <span class="hljs-number">50</span><span class="hljs-variable">*8</span>)]
+<span class="hljs-keyword">state</span> = proj.factory.entry_state(args=args)</code></pre>
+    <p>
+     然后创建一个simulation_manager模拟器，执行
+     <br/>
+     在 Angr 寻找路径时，程序的当前状态有多种表示。
+    </p>
+    <pre class="prettyprint"><code class=" hljs erlang"><span class="hljs-function"><span class="hljs-title">step</span><span class="hljs-params">()</span>表示向下执行一个<span class="hljs-title">block</span>（42<span class="hljs-title">bytes</span>），<span class="hljs-title">step</span><span class="hljs-params">()</span>函数产生<span class="hljs-title">active</span>状态，表示该分支在执行中；
+<span class="hljs-title">run</span><span class="hljs-params">()</span>表示运行到结束，<span class="hljs-title">run</span><span class="hljs-params">()</span>函数产生<span class="hljs-title">deadended</span>状态，表示分支结束；
+<span class="hljs-title">explore</span><span class="hljs-params">()</span>可以对地址进行限制以减少符号执行遍历的路径。例如
+<span class="hljs-title">sm</span>.<span class="hljs-title">explore</span><span class="hljs-params">(find=<span class="hljs-number">0</span>x400676,avoid=[<span class="hljs-number">0</span>x40073d])</span>
+<span class="hljs-title">explore</span><span class="hljs-params">()</span>产生<span class="hljs-title">found</span>状态，表示探索的结果等等</span></code></pre>
+    <p>
+     获取当前程序的输出
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">print sm<span class="hljs-preprocessor">.found</span><span class="hljs-preprocessor">.posix</span><span class="hljs-preprocessor">.dumps</span>(<span class="hljs-number">1</span>)</code></pre>
+    <p>
+     获取当前程序的命令行参数
+    </p>
+    <pre class="prettyprint"><code class=" hljs php"><span class="hljs-keyword">print</span> sm.found.solver.<span class="hljs-keyword">eval</span>(arg1,cast_to = str)  
+arg1就是我上面BVS构造的命令行的输入
+<span class="hljs-keyword">eval</span>是将我的输入转化为str</code></pre>
+    <p>
+     我们在刚开始时可以对输入进行限制
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">k=state<span class="hljs-preprocessor">.posix</span><span class="hljs-preprocessor">.files</span>[<span class="hljs-number">0</span>]<span class="hljs-preprocessor">.read</span>_from(<span class="hljs-number">1</span>)  获取输入的一字节
+state<span class="hljs-preprocessor">.se</span><span class="hljs-preprocessor">.add</span>(k!=<span class="hljs-number">10</span>)  添加限制条件
+state<span class="hljs-preprocessor">.posix</span><span class="hljs-preprocessor">.files</span>[<span class="hljs-number">0</span>]<span class="hljs-preprocessor">.length</span> = int(sys<span class="hljs-preprocessor">.argv</span>[<span class="hljs-number">2</span>])+<span class="hljs-number">1</span>  限制输入的长度
+state<span class="hljs-preprocessor">.posix</span><span class="hljs-preprocessor">.files</span>[<span class="hljs-number">0</span>]<span class="hljs-preprocessor">.seek</span>(<span class="hljs-number">0</span>)  记得需要将指针指向开头
+state<span class="hljs-preprocessor">.posix</span><span class="hljs-preprocessor">.files</span>[<span class="hljs-number">0</span>]<span class="hljs-preprocessor">.all</span>_bytes()   获取用户的全部输入</code></pre>
+    <p>
+     注意一点在使用angr求解的时候，一定要弄清楚，flag到底在哪里，你应该输出什么，别到时候脚本跑了十分钟，成功结束了，然后什么输出也看不到，这就很尴尬。
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     学会简单的输入输出还远不够，有时候还需要对一些结果存储到内存中，接下来学习下执行时变量的存取。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80300289
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7599290" target="_blank">
+    Re
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

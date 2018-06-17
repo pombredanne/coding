@@ -1,0 +1,125 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   ubuntu折腾笔记【三】
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年06月06日 01:22:33
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：26
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     爱折腾！这两天可把我给折腾了一番。
+    </p>
+    <h3 id="软件">
+     软件
+    </h3>
+    <p>
+     这里只列举一些比较使用的软件，具体的安装过程就不写了。
+     <br/>
+     Docky 一个仿制mac osx的软件
+     <br/>
+     Chrome 不用说了吧
+     <br/>
+     guake  很方便的一款终端(透明的哦)
+     <br/>
+     fcitx 搜狗拼音输入法，本来是想全英文工作的，但最后发现在搜索时需要用到中文啊，还有写博客的时候
+     <br/>
+     albert  强大的启动器，比系统自带的搜索好用多了
+     <br/>
+     Vim   神的编辑器，我感觉用习惯了是挺好用的，主要是方便
+     <br/>
+     pycharm  具体的IDE看个人喜好了
+     <br/>
+     tweaks    gnome桌面美化的工具
+     <br/>
+     synaptic  相当于是一个软件管家，可以卸载一些不知道怎么卸载的软件
+     <br/>
+     nixnote2    据说是印象笔记的linux版本，但是为什么我的账号登不上去
+     <br/>
+     gnome    可以通过访问他的官网下载很多好用的扩展和主题，用来美化界面还是不错的
+     <br/>
+     kvm虚拟机本来想下来着，但是ubuntu好像不太好装，一般都是用centen os装的kvm
+     <br/>
+     gparted  一款磁盘管理工具，比gnome-disks要好用我觉得是这样的
+     <br/>
+     网易云音乐  linux版 这个好像需要从命令行启动才行，而且无法通过客户端进行注册401错误，但是有总比没有强，而且需要root启动，它的启动器设置好久没弄好。最后不得不通过终端起了。不过还是很美的
+     <br/>
+     微信网页版 。。==.==
+     <br/>
+     qq网页版没有找到 我记得多年以前还是有的呀
+     <br/>
+     Todo  每天制定一个计划
+     <br/>
+     sublime  蛮好用的，安装插件很方便
+     <br/>
+     暂时就是这些，以后发现什么好用的软件在做补充！
+     <br/>
+     ————————-分割线——————————–
+     <br/>
+     <strong>
+      <em>
+       ps:感觉linux就是喜欢折腾界面，很漂亮，但我建议大家别入美化这个坑
+      </em>
+     </strong>
+     <br/>
+     创建软件的桌面快捷方式：
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">vim /usr/share/applications/eclipse<span class="hljs-preprocessor">.desktop</span></code></pre>
+    <pre class="prettyprint"><code class=" hljs ini"><span class="hljs-title">[Desktop Entry]</span>
+<span class="hljs-setting">Encoding=<span class="hljs-value">UTF-<span class="hljs-number">8</span></span></span>
+<span class="hljs-setting">Name=<span class="hljs-value">eclipse</span></span>
+<span class="hljs-setting">Comment=<span class="hljs-value">Eclipse IDE</span></span>
+<span class="hljs-setting">Exec=<span class="hljs-value">/usr/local/eclipse/eclipse  #根据软件的具体执行路径修改</span></span>
+<span class="hljs-setting">Icon=<span class="hljs-value">/usr/local/eclipse/icon.xpm  #根据软件的具体执行路径修改</span></span>
+<span class="hljs-setting">Terminal=<span class="hljs-value"><span class="hljs-keyword">false</span>  #软件打开时是否启动终端</span></span>
+<span class="hljs-setting">StartupNotify=<span class="hljs-value"><span class="hljs-keyword">false</span></span></span>
+<span class="hljs-setting">Type=<span class="hljs-value">Application</span></span>
+<span class="hljs-setting">Categories=<span class="hljs-value">Application;Development;</span></span></code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     整体感觉thinkpad x1c安装ubuntu1804没有驱动的问题，小红点直接能用，无线，蓝牙驱动也都没有问题。看来ubuntu社区的工程师们做了很多的努力！辛苦了！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80589362
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7712972" target="_blank">
+    ubuntu
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

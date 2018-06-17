@@ -1,0 +1,198 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   python常见模块的使用string,hashlib,pycipher
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年02月11日 21:44:06
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：95
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     <strong>
+      <em>
+       前言
+      </em>
+     </strong>
+    </h1>
+    <p>
+     经常写点东西，总结一下也挺好！-.-
+    </p>
+    <h3 id="一hashlib模块处理hash时常用">
+     一、hashlib模块处理hash时常用
+    </h3>
+    <p>
+     首推还是看官网的文档
+     <br/>
+     <a href="https://docs.python.org/3/library/hashlib.html" rel="nofollow">
+      https://docs.python.org/3/library/hashlib.html
+     </a>
+     <br/>
+     其实看了官方的说明，我顿时就不知道该写什么了。
+     <br/>
+     例子拿去：
+    </p>
+    <pre class="prettyprint"><code class=" hljs tex">&gt;&gt;&gt; import hashlib
+&gt;&gt;&gt; m = hashlib.sha256()
+&gt;&gt;&gt; m.update(b"Nobody inspects")
+&gt;&gt;&gt; m.update(b" the spammish repetition")
+&gt;&gt;&gt; m.digest()
+b'<span class="hljs-command">\x</span>03<span class="hljs-command">\x</span>1e<span class="hljs-command">\xdd</span><span class="hljs-special">}</span>Ae<span class="hljs-command">\x</span>15<span class="hljs-command">\x</span>93<span class="hljs-command">\xc</span>5<span class="hljs-command">\xfe</span><span class="hljs-command">\\</span><span class="hljs-command">\x</span>00o<span class="hljs-command">\xa</span>5u+7<span class="hljs-command">\xfd</span><span class="hljs-command">\xdf</span><span class="hljs-command">\xf</span>7<span class="hljs-command">\xbcN</span><span class="hljs-command">\x</span>84:<span class="hljs-command">\xa</span>6<span class="hljs-command">\xaf</span><span class="hljs-command">\x</span>0c<span class="hljs-command">\x</span>95<span class="hljs-command">\x</span>0fK<span class="hljs-command">\x</span>94<span class="hljs-command">\x</span>06'
+&gt;&gt;&gt; m.digest_size
+32
+&gt;&gt;&gt; m.block_size
+64</code></pre>
+    <pre class="prettyprint"><code class=" hljs applescript">Note：
+Feeding <span class="hljs-type">string</span> objects <span class="hljs-keyword">into</span> update() <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> supported,
+<span class="hljs-keyword">as</span> hashes work <span class="hljs-function_start"><span class="hljs-keyword">on</span></span> bytes, <span class="hljs-keyword">not</span> <span class="hljs-function_start"><span class="hljs-keyword">on</span></span> <span class="hljs-property">characters</span>. 
+意思就是update的参数默认会先转化为byte</code></pre>
+    <pre class="prettyprint"><code class=" hljs sql">m.<span class="hljs-operator"><span class="hljs-keyword">update</span>(b<span class="hljs-string">"Nobody inspects"</span>) 和 m.<span class="hljs-keyword">update</span>(<span class="hljs-string">"Nobody inspects"</span>)
+本质上是一样的，会自动的将“”转化为bytes</span></code></pre>
+    <p>
+     但是通常更常用的写法是这样的：
+    </p>
+    <pre class="prettyprint"><code class=" hljs go">h=hashlib.<span class="hljs-built_in">new</span>(<span class="hljs-string">"sha256"</span>) 
+#<span class="hljs-string">'md5'</span>, <span class="hljs-string">'sha1'</span>, <span class="hljs-string">'sha224'</span>, <span class="hljs-string">'sha256'</span>, <span class="hljs-string">'sha384'</span>, <span class="hljs-string">'sha512'</span>....
+h.update(<span class="hljs-string">"Hello"</span>)
+<span class="hljs-built_in">print</span> h.hexdigest()</code></pre>
+    <p>
+     另外顺带说一下MD5 16位 和32位的关系。
+     <br/>
+     md5 16位其实就是32位的中间部分，自己可以去验证一下。
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">h=hashlib<span class="hljs-preprocessor">.new</span>(<span class="hljs-string">"md5"</span>)
+h<span class="hljs-preprocessor">.update</span>(<span class="hljs-string">"123"</span>)
+print h<span class="hljs-preprocessor">.hexdigest</span>()<span class="hljs-preprocessor">#202cb962ac59075b964b07152d234b70</span>
+print h<span class="hljs-preprocessor">.hexdigest</span>()[<span class="hljs-number">8</span>:-<span class="hljs-number">8</span>] <span class="hljs-preprocessor">#ac59075b964b0715</span></code></pre>
+    <p>
+     另外还有一个就是
+     <code>
+      hashlib.pbkdf2_hmac(hash_name, password, salt, iterations, dklen=None)
+     </code>
+     <br/>
+     就是带key的hash，通常来说hash是不会带key，具体是什么意思我也不懂。没学过！！！ 不过这需要python3以上才行。
+    </p>
+    <pre class="prettyprint"><code class=" hljs oxygene"><span class="hljs-keyword">New</span> <span class="hljs-keyword">in</span> version <span class="hljs-number">3.4</span> 在python3.<span class="hljs-number">4</span>中又改了，使用hmac
+Note
+A fast <span class="hljs-keyword">implementation</span> <span class="hljs-keyword">of</span> pbkdf2_hmac <span class="hljs-keyword">is</span> available <span class="hljs-keyword">with</span> OpenSSL.
+The Python <span class="hljs-keyword">implementation</span> <span class="hljs-keyword">uses</span> an <span class="hljs-keyword">inline</span> version <span class="hljs-keyword">of</span> hmac.
+It <span class="hljs-keyword">is</span> about three times slower <span class="hljs-keyword">and</span> doesn’t release the GIL. </code></pre>
+    <h3 id="二string模块">
+     二、string模块
+    </h3>
+    <p>
+     string模块我觉得主要是可以用来表示常见的字符集合。
+     <br/>
+     可以搜索string.py看一下里面的集合定义，如下。
+    </p>
+    <pre class="prettyprint"><code class=" hljs python">whitespace = <span class="hljs-string">' \t\n\r\v\f'</span>
+lowercase = <span class="hljs-string">'abcdefghijklmnopqrstuvwxyz'</span>
+uppercase = <span class="hljs-string">'ABCDEFGHIJKLMNOPQRSTUVWXYZ'</span>
+letters = lowercase + uppercase
+ascii_lowercase = lowercase
+ascii_uppercase = uppercase
+ascii_letters = ascii_lowercase + ascii_uppercase
+digits = <span class="hljs-string">'0123456789'</span>
+hexdigits = digits + <span class="hljs-string">'abcdef'</span> + <span class="hljs-string">'ABCDEF'</span>
+octdigits = <span class="hljs-string">'01234567'</span>
+punctuation = <span class="hljs-string">"""!"#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^_`{|}~"""</span>
+printable = digits + letters + punctuation + whitespace</code></pre>
+    <p>
+     好了，这个就不多说了，常常用作爆破的集合
+     <br/>
+     <strong>
+      <em>
+       note：其实我们完全可以在自己电脑上搜索相应模块如hashlib.py
+      </em>
+     </strong>
+    </p>
+    <h3 id="三pycipher模块">
+     三、pycipher模块
+    </h3>
+    <p>
+     从这个模块的介绍中
+    </p>
+    <pre class="prettyprint"><code class=" hljs ">Several simple cipher algorithms</code></pre>
+    <p>
+     这个模块主要是一些简单的加密算法
+     <br/>
+     我这里就提两种。Affine和Playfair
+     <br/>
+     用法：具体的算法我就不多介绍了。
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">from</span> pycipher <span class="hljs-keyword">import</span> Affine
+<span class="hljs-keyword">print</span> Affine(<span class="hljs-number">5</span>,<span class="hljs-number">11</span>).encipher(<span class="hljs-string">"Hello"</span>)<span class="hljs-comment">#UFFOOD</span>
+<span class="hljs-keyword">print</span> Affine(<span class="hljs-number">5</span>,<span class="hljs-number">11</span>).decipher(<span class="hljs-string">"UFFOOD"</span>) <span class="hljs-comment">#HEELLO</span></code></pre>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">from</span> pycipher <span class="hljs-keyword">import</span> Playfair
+<span class="hljs-keyword">print</span> Playfair(<span class="hljs-string">"CULTREABDFGHIKMNOPQSVWXYZ"</span>).encipher(<span class="hljs-string">"Helo"</span>) <span class="hljs-comment">#GAUP</span>
+<span class="hljs-keyword">print</span> Playfair(<span class="hljs-string">"CULTREABDFGHIKMNOPQSVWXYZ"</span>).decipher(<span class="hljs-string">"GAUP"</span>)<span class="hljs-comment">#Helo</span></code></pre>
+    <h1 id="总结">
+     <strong>
+      <em>
+       总结
+      </em>
+     </strong>
+    </h1>
+    <p>
+     python是一门很简洁的语言，多学习对自己处理一些事情的帮助还是挺大的。
+     <br/>
+     最后贴上一个批量重命名的脚本，，
+    </p>
+    <pre class="prettyprint"><code class=" hljs lua">#-*-coding:utf-<span class="hljs-number">8</span>-*-
+import <span class="hljs-built_in">os</span>,sys
+path=<span class="hljs-string">"."</span>
+old_names=<span class="hljs-built_in">os</span>.listdir(path)
+i=<span class="hljs-number">1</span>
+<span class="hljs-keyword">for</span> dir <span class="hljs-keyword">in</span> old_names:
+    new_name=str(i)+<span class="hljs-string">".jpg"</span>
+    <span class="hljs-built_in">os</span>.rename(dir,new_name)
+    i=i+<span class="hljs-number">1</span></code></pre>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79313445
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=python&amp;t=blog" target="_blank">
+    python
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7452180" target="_blank">
+    python
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

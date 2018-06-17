@@ -1,0 +1,115 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   Frida之hook Native函数
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年03月17日 23:04:09
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：134
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     最近发现了一个hook框架，蛮有意思的，上手也很容易。
+    </p>
+    <h3 id="例题">
+     例题
+    </h3>
+    <p>
+     我拿的是阿里2014CTF第二个apk作为样本。主要是讲一些思路，具体的过程就不写了，网上有很多的。
+    </p>
+    <h3 id="一">
+     一、
+    </h3>
+    <p>
+     对于Frida来说Hook一个native函数很简单，其实和hook一个java层的代码是一样的。不多写了。但对于这题来说，仅仅hook代码是不够的，还需要从内存中泄露出key。
+     <br/>
+     使用IDA打开crack.so
+    </p>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180317205415809?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     关键在这里0ff_628C，该函数会将我们输入的密码和该内存中的字符串进行对比，我们可以查看该值为
+     <code>
+      aWojiushidaan
+     </code>
+     但是这不是密码，说明程序在运行时，该内存中的字符串发生了改变，所以需要动态的调试才能获取该字符串。但是该apk做了反调试检测，因此如果要动态调试，就必须绕过反调试才行，这给我们解题增加了难度。
+     <br/>
+     但是，由于该字符串的位置是相对固定的，所以我们可以找到程序运行时该串的的地址，从而泄露出该值，frida可以做到
+     <br/>
+     核心代码如下：
+    </p>
+    <pre class="prettyprint"><code class=" hljs javascript">Java.perform(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span>{</span>
+    <span class="hljs-keyword">var</span> securityCheck = <span class="hljs-literal">undefined</span>;
+    exports = Module.enumerateExportsSync(<span class="hljs-string">"libcrackme.so"</span>);
+    <span class="hljs-keyword">for</span>(i=<span class="hljs-number">0</span>;i&lt;exports.length;i++){
+        <span class="hljs-keyword">if</span>(exports[i].name==<span class="hljs-string">"Java_com_yaotong_crackme_MainActivity_securityCheck"</span>){
+            securityCheck=exports[i].address;
+            send(<span class="hljs-string">"securityCheck at "</span>+securityCheck);
+            <span class="hljs-keyword">break</span>;
+        }
+    }
+    Interceptor.attach(securityCheck,{
+        onEnter: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(args)</span>{</span> 
+    send(<span class="hljs-string">"key is: "</span> + Memory.readUtf8String(Memory.readPointer(securityCheck.sub(<span class="hljs-number">0x11a8</span>).add(<span class="hljs-number">0x628c</span>))));
+    }
+    });
+});</code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     熬夜肝！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79596840
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=Frida&amp;t=blog" target="_blank">
+    Frida
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=Native&amp;t=blog" target="_blank">
+    Native
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

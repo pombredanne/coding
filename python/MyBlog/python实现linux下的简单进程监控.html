@@ -1,0 +1,163 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   python实现linux下的简单进程监控
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2017年07月21日 20:03:38
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：1886
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     最近看writeup看的有点头疼，深深感受到了自己的无知。确实还需要学习很多东西、一点一点的积累！加油！
+    </p>
+    <p>
+     python确实很强大哦~，要想学好python就得自己多动手堆代码！
+     <br/>
+     无聊写了一个进程监控的脚本，就当做是练习。其实最终实现的功能也很简单。
+     <br/>
+     记录如下：
+     <br/>
+     0x00:
+     <br/>
+     首先这种写法要学会哦，虽然不知道具体有什么用吧，但是这代码写的，看着就很有水平！哈！
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">main</span><span class="hljs-params">()</span>:</span>
+    <span class="hljs-keyword">while</span> <span class="hljs-number">1</span>:
+        psutil_process()
+
+<span class="hljs-keyword">if</span> __name__==<span class="hljs-string">"__main__"</span>:
+    main()</code></pre>
+    <p>
+     <strong>
+      name
+     </strong>
+     ==”
+     <strong>
+      main
+     </strong>
+     “的作用是为了对py的运行方式进行检测，如果模块是被导入，
+     <strong>
+      name
+     </strong>
+     的值为模块的名字，如果是直接执行
+     <strong>
+      name
+     </strong>
+     的值==”
+     <strong>
+      main
+     </strong>
+     ”
+     <br/>
+     网上找了一个解释，贴在这里，希望有懂得人来讲讲具体区别。
+     <br/>
+     0x01：
+     <br/>
+     进程监控、刚开始我的想法是通过两次执行执行ps -e命令，比较不同。于是就上网
+     <br/>
+     找到了subprocess模块。具体的用法还是自行百度，网上资料很多的。
+     <br/>
+     主要是用subprocess.Popen()这个方法通过shell创建一个子进程，不过这个方法不太可行，主要的问题出在两者的比较上。。大家有兴趣可以去做一下，主要是为了练习python
+     <br/>
+     0x02:
+     <br/>
+     继续百度于是找到了psutil这个模块
+     <br/>
+     代码如下：
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">import</span> subprocess
+<span class="hljs-keyword">import</span> sys
+<span class="hljs-keyword">import</span> psutil
+<span class="hljs-keyword">import</span> time
+<span class="hljs-keyword">import</span> datetime
+log_file=<span class="hljs-string">'monitor_log.txt'</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">print_process_information</span><span class="hljs-params">(pid)</span>:</span>
+    p=psutil.Process(pid)
+    message=<span class="hljs-string">'[!][Add]pid:'</span>+str(p.pid)+<span class="hljs-string">'  '</span>+<span class="hljs-string">'name:'</span>+p.name()+<span class="hljs-string">'  '</span>+<span class="hljs-string">'username:'</span>+p.username()+<span class="hljs-string">'  '</span>+<span class="hljs-string">'status:'</span>+p.status()+<span class="hljs-string">'  '</span>+<span class="hljs-string">'start_time:'</span>+datetime.datetime.fromtimestamp(p.create_time()).strftime(<span class="hljs-string">"%H:%M:%S"</span>)
+    <span class="hljs-keyword">print</span> message
+    fp=open(log_file,<span class="hljs-string">'a'</span>)
+    <span class="hljs-keyword">try</span>:
+        message+=<span class="hljs-string">'\n'</span>
+        fp.writelines(message)
+    <span class="hljs-keyword">finally</span>:
+        fp.close()
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">psutil_process</span><span class="hljs-params">()</span>:</span>
+    pids_1=psutil.pids()
+    time.sleep(<span class="hljs-number">2</span>)
+    pids_2=psutil.pids()
+    <span class="hljs-keyword">for</span> pid <span class="hljs-keyword">in</span> pids_2:
+        <span class="hljs-keyword">if</span> pid <span class="hljs-keyword">in</span> pids_1:
+            <span class="hljs-comment">#print 'ok!'</span>
+            <span class="hljs-keyword">pass</span>
+        <span class="hljs-keyword">else</span>:
+            print_process_information(pid)
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">main</span><span class="hljs-params">()</span>:</span>
+    <span class="hljs-keyword">while</span> <span class="hljs-number">1</span>:
+        psutil_process()
+
+<span class="hljs-keyword">if</span> __name__==<span class="hljs-string">"__main__"</span>:
+    main()</code></pre>
+    <p>
+     0x03:
+     <br/>
+     最后可以在改进一下
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl">message=<span class="hljs-string">'[!][Add]pid:'</span>+str(p.pid)+<span class="hljs-string">'  '</span>+<span class="hljs-string">'name:'</span>+p.name()+<span class="hljs-string">'  '</span>+<span class="hljs-string">'username:'</span>+p.username()+<span class="hljs-string">'  '</span>+<span class="hljs-string">'status:'</span>+p.status()+<span class="hljs-string">'  '</span>+<span class="hljs-string">'start_time:'</span>+datetime.datetime.fromtimestamp(p.create_time()).strftime(<span class="hljs-string">"<span class="hljs-variable">%H</span>:<span class="hljs-variable">%M</span>:<span class="hljs-variable">%S</span>"</span>)</code></pre>
+    <p>
+     这里可以用格式化输出。。做个元组什么的
+     <br/>
+     0x04：
+     <br/>
+     通过这个小小的进程监控，我学习了subprocess和psutil，了解了管道的单方向性。Perfect！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/75671349
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=python&amp;t=blog" target="_blank">
+    python
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=脚本&amp;t=blog" target="_blank">
+    脚本
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

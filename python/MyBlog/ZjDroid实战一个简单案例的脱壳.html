@@ -1,0 +1,107 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   ZjDroid实战一个简单案例的脱壳
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年03月13日 23:29:36
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：112
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     主要还是参照了大黄书中的第18章内容。这里仅做个记录。
+    </p>
+    <h3 id="准备">
+     准备
+    </h3>
+    <p>
+     ZjDroid模块(网上找不到现成的模块了，但是github上有源码，可以自己生成一个)
+     <br/>
+     一只装有Xposed框架的手机
+    </p>
+    <h3 id="操作">
+     操作
+    </h3>
+    <p>
+     获取包名和pid
+    </p>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">adb <span class="hljs-built_in">shell</span> dumpsys activity top</code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180313230231434?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     查看该应用使用了哪些API数据
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso">adb shell logcat <span class="hljs-attribute">-s</span> zjdroid<span class="hljs-attribute">-apimonitor</span><span class="hljs-attribute">-org</span><span class="hljs-built_in">.</span>cocos2d<span class="hljs-built_in">.</span>fishingjoy3</code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180313230157447?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     查看该应用的dex文件信息，为了获取dex路径
+    </p>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">adb <span class="hljs-built_in">shell</span> am broadcast -<span class="hljs-operator">a</span> com.zjdroid.invoke <span class="hljs-comment">--ei target 20939--es cmd '{"action":"dump_dexinfo"}'</span></code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180313230943179?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     得到smali文件
+    </p>
+    <pre class="prettyprint"><code class=" hljs profile">adb shell am broadcast -a <span class="hljs-filename">com.zjdroid.invoke --ei target 20939 --es cmd '{action</span>:backsmali,<span class="hljs-string">"dexpath"</span>:<span class="hljs-string">"/data/app/org.cocos2d.fishingjoy3-1.apk"</span>}<span class="hljs-string">'</span></code></pre>
+    <p>
+     最后的smali文件在dex路径的smali路径下，通过pull出来即可，反编译。
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     我在操作的时候，最后几步失败了，提示我非法的cmd指令？？？一脸懵逼！知道有这么个东西就好了。反正现在基本上还是手动脱壳比较多。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79548660
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=ZjDroid&amp;t=blog" target="_blank">
+    ZjDroid
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

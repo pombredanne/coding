@@ -1,0 +1,323 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   动手编写Xposed模块
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="c-gray">
+    置顶
+   </span>
+   <span class="time">
+    2018年02月04日 21:08:33
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：488
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     <strong>
+      <em>
+       写在前面：
+      </em>
+     </strong>
+     今天自己动手实现了Xposed模块的编写，又费了很大劲，之前一直在搞crypto（对于我这个没学过数论的菜鸡，确实好难），这次把很多丢了的东西又捡回来了，所以在这里做个记录，下次再丢可以来这里看看。其实关于Xposed模块编写，网上有很多文章，都可以拿来借鉴，但自己写的才是最好的！
+    </p>
+    <h1 id="一准备">
+     一、准备
+    </h1>
+    <ol>
+     <li>
+      一只安装Xposed框架的Android手机
+     </li>
+     <li>
+      基本的Android的开发环境(-.-)
+     </li>
+     <li>
+      <p>
+       XposedBridgeApi-54.jar (这里我不提供链接了，自己网上找找)
+      </p>
+      <p>
+       <strong>
+        <em>
+         准备差不多这么多
+        </em>
+       </strong>
+      </p>
+     </li>
+    </ol>
+    <h1 id="二编写被hook的app">
+     二、编写被Hook的app
+    </h1>
+    <p>
+     注意：
+     <code>
+      XposedBridgeApi-54.jar
+     </code>
+     这个包必须是要使用provided 进行编译的，否则会重复包含，导致错误。这里提供两种方案：
+     <br/>
+     <strong>
+      <em>
+       方案一：
+      </em>
+     </strong>
+     将jar包导入到libs目录下(当然这里也可以直接复制粘贴进来),修改build.gradle文件。修改前后如下：
+    </p>
+    <pre class="prettyprint"><code class=" hljs rust">修改前：compile fileTree(include: [<span class="hljs-string">'*.jar'</span>], <span class="hljs-keyword">dir</span>: <span class="hljs-string">'libs'</span>)
+修改后：provided fileTree(include: [<span class="hljs-string">'*.jar'</span>], <span class="hljs-keyword">dir</span>: <span class="hljs-string">'libs'</span>)</code></pre>
+    <p>
+     <strong>
+      <em>
+       注意：在添加jar包后在同步gradle，否则会加载不出来-2018/3/7注
+      </em>
+     </strong>
+     <br/>
+     <strong>
+      <em>
+       也可以这么做provided files(‘libs/XposedBridgeApi-54.jar’) 总之是要将jar包利用provided方式进行加载-2018/3/8注
+      </em>
+     </strong>
+     <br/>
+     <strong>
+      <em>
+       方案二：
+      </em>
+     </strong>
+     在app目录下新建lib目录和libs目录同一级，将jar包导入到lib目录中，同样修改build.gradle文件。如下：
+    </p>
+    <pre class="prettyprint"><code class=" hljs livecodeserver">在原有的dependences块中增加一行：provided <span class="hljs-built_in">files</span>(<span class="hljs-string">'lib/XposedBridgeApi-54.jar'</span>)</code></pre>
+    <p>
+     这样修改后就不有编译错误了。
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">具体案例的代码如下，写得比较简单，就不解释了。
+private ImageView imageView<span class="hljs-comment">;</span>
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super<span class="hljs-preprocessor">.onCreate</span>(savedInstanceState)<span class="hljs-comment">;</span>
+        setContentView(R<span class="hljs-preprocessor">.layout</span><span class="hljs-preprocessor">.main</span>_layout)<span class="hljs-comment">;</span>
+        imageView=(ImageView) findViewById(R<span class="hljs-preprocessor">.id</span><span class="hljs-preprocessor">.picture</span>)<span class="hljs-comment">;</span>
+        Resources resources=this<span class="hljs-preprocessor">.getResources</span>()<span class="hljs-comment">;</span>
+        Bitmap bitmap = BitmapFactory<span class="hljs-preprocessor">.decodeResource</span>(resources,R<span class="hljs-preprocessor">.drawable</span><span class="hljs-preprocessor">.image</span>1)<span class="hljs-comment">;//给你个眼神自行体会</span>
+        imageView<span class="hljs-preprocessor">.setImageBitmap</span>(bitmap)<span class="hljs-comment">;</span>
+        Button buttonHook = (Button) findViewById(R<span class="hljs-preprocessor">.id</span><span class="hljs-preprocessor">.buttonHook</span>)<span class="hljs-comment">;</span>
+        Button buttonRecover = (Button) findViewById(R<span class="hljs-preprocessor">.id</span><span class="hljs-preprocessor">.buttonRecover</span>)<span class="hljs-comment">;</span>
+        buttonHook<span class="hljs-preprocessor">.setOnClickListener</span>(this)<span class="hljs-comment">;</span>
+        buttonRecover<span class="hljs-preprocessor">.setOnClickListener</span>(this)<span class="hljs-comment">;</span>
+    }
+    public void onClick(View v){
+        switch (v<span class="hljs-preprocessor">.getId</span>()){
+            case R<span class="hljs-preprocessor">.id</span><span class="hljs-preprocessor">.buttonHook</span>:
+                if(check()){
+                    //Toast<span class="hljs-preprocessor">.makeText</span>(MainActivity<span class="hljs-preprocessor">.this</span>, <span class="hljs-string">"Congratulation!"</span>, Toast<span class="hljs-preprocessor">.LENGTH</span>_SHORT)<span class="hljs-preprocessor">.show</span>()<span class="hljs-comment">;</span>
+                    imageView<span class="hljs-preprocessor">.setImageResource</span>(R<span class="hljs-preprocessor">.drawable</span><span class="hljs-preprocessor">.image</span>2)<span class="hljs-comment">;</span>
+                }
+                <span class="hljs-keyword">break</span><span class="hljs-comment">;</span>
+            case R<span class="hljs-preprocessor">.id</span><span class="hljs-preprocessor">.buttonRecover</span>:
+                imageView<span class="hljs-preprocessor">.setImageResource</span>(R<span class="hljs-preprocessor">.drawable</span><span class="hljs-preprocessor">.image</span>1)<span class="hljs-comment">;</span>
+                <span class="hljs-keyword">break</span><span class="hljs-comment">;</span>
+        }
+    }
+    private boolean check() {
+        Toast<span class="hljs-preprocessor">.makeText</span>(MainActivity<span class="hljs-preprocessor">.this</span>, <span class="hljs-string">"This is test!"</span>, Toast<span class="hljs-preprocessor">.LENGTH</span>_SHORT)<span class="hljs-preprocessor">.show</span>()<span class="hljs-comment">;</span>
+        return false<span class="hljs-comment">;</span>
+    }</code></pre>
+    <p>
+     其实我最开始是想Hook Toast的，但是尝试失败，无奈之下写了check。那接下来我们就来Xposed模块咯。
+    </p>
+    <h1 id="三编写xposed模块">
+     三、编写Xposed模块：
+    </h1>
+    <p>
+     <strong>
+      <em>
+       Xposed模块通常是没有界面的，当然你也可以提供一个界面，在文末我会贴上有界面的图和代码。
+      </em>
+     </strong>
+    </p>
+    <p>
+     新建一个项目，修改build.gradle，在app-&gt;src-&gt;main下新建assets目录，在assets目录下新建xposed_init文件，并添加
+     <code>
+      com.code.jsk.xposedhook.MainCtf
+     </code>
+     包名+类名 用于xposed的初始化，它会执行该目录下的代码。接着只要编写Hook类，并重写handleLoadPackage即可。
+    </p>
+    <pre class="prettyprint"><code class=" hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MainCtf</span> <span class="hljs-keyword">implements</span> <span class="hljs-title">IXposedHookLoadPackage</span> {</span>
+    <span class="hljs-comment">//包加载时回调</span>
+    <span class="hljs-annotation">@Override</span>
+    <span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">handleLoadPackage</span>(XC_LoadPackage.LoadPackageParam loadPackageParam) <span class="hljs-keyword">throws</span> Throwable {
+        <span class="hljs-keyword">if</span> (!loadPackageParam.packageName.equals(<span class="hljs-string">"com.code.jsk.xposedexampleapp"</span>)) <span class="hljs-keyword">return</span>;
+        XposedBridge.log(<span class="hljs-string">"Load app"</span> + loadPackageParam.packageName); <span class="hljs-comment">//在日志中记录我hook了哪个包</span>
+        <span class="hljs-comment">//findAndHookMethod("android.widget.Toast", loadPackageParam.classLoader, "makeText", new XC_MethodReplacement() {</span>
+        findAndHookMethod(<span class="hljs-string">"com.code.jsk.xposedexampleapp.MainActivity"</span>,loadPackageParam.classLoader, <span class="hljs-string">"check"</span>, <span class="hljs-keyword">new</span> XC_MethodReplacement() {
+            <span class="hljs-annotation">@Override</span>
+            <span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title">beforeHookedMethod</span>(MethodHookParam param) <span class="hljs-keyword">throws</span> Throwable {
+                XposedBridge.log(<span class="hljs-string">"This is beforeHookedMethod!"</span>);
+            }
+
+            <span class="hljs-annotation">@Override</span>
+            <span class="hljs-keyword">protected</span> Object <span class="hljs-title">replaceHookedMethod</span>(MethodHookParam param) <span class="hljs-keyword">throws</span> Throwable {
+                <span class="hljs-comment">//Toast.makeText(, "Hacked!", Toast.LENGTH_SHORT).show();</span>
+                XposedBridge.log(<span class="hljs-string">"Hacked check"</span>);
+                <span class="hljs-keyword">return</span> <span class="hljs-keyword">true</span>;
+            }
+            <span class="hljs-annotation">@Override</span>
+            <span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title">afterHookedMethod</span>(MethodHookParam param) <span class="hljs-keyword">throws</span> Throwable {
+                XposedBridge.log(<span class="hljs-string">"This is the afterHookedMethod!"</span>);
+            }
+        });
+
+    }
+}</code></pre>
+    <p>
+     代码中我都加了关键注释，主要就是处理
+     <strong>
+      beforeHookedMethod
+     </strong>
+     ，
+     <strong>
+      replaceHookedMethod
+     </strong>
+     ，
+     <strong>
+      afterHookedMethod
+     </strong>
+     这三个函数
+     <br/>
+     基本的过程就是先找到相应的包，之后再匹配需要hook的方法，之后就是replace方法。
+     <br/>
+     我个人比较喜欢用adb进行操作：
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso">adb install <span class="hljs-attribute">-r</span> hook<span class="hljs-built_in">.</span>apk 进行安装 <span class="hljs-attribute">-r</span>是强制覆盖安装
+adb reboot 重启
+</code></pre>
+    <p>
+     之前有一段代码写错了。这里记录这个错误就不做修改了。
+     <br/>
+     findAndHookMethod(“com.code.jsk.xposedexampleapp.MainActivity”,loadPackageParam.classLoader, “check”, new XC_MethodReplacement() {}）
+     <br/>
+     他有两种写法，一种是
+    </p>
+    <pre class="prettyprint"><code class=" hljs javascript">findAndHookMethod(<span class="hljs-built_in">String</span> className,
+
+ClassLoader classLoader,
+
+<span class="hljs-built_in">String</span> methodName, 
+
+<span class="hljs-built_in">Object</span>... parameter TypesAndCallback)</code></pre>
+    <p>
+     还有一种：
+    </p>
+    <pre class="prettyprint"><code class=" hljs vbnet">findAndHookMethod(<span class="hljs-keyword">Class</span>&lt;?&gt; clazz, 
+
+<span class="hljs-built_in">String</span> methodName,
+
+<span class="hljs-built_in">Object</span>... parameter TypesAndCallback)</code></pre>
+    <p>
+     最后一个参数new的对象也有不同如果仅仅是replaceMethoed，那么使用
+     <code>
+      new XC_MethodReplacement() {
+     </code>
+     即可，如果需要使用
+     <strong>
+      beforeHookedMethod
+     </strong>
+     和
+     <strong>
+      afterHookedMethod
+     </strong>
+     这两个函数那么就需要
+     <code>
+      new XC_MethodHook() {
+     </code>
+     <br/>
+     修改后的代码如下：
+    </p>
+    <pre class="prettyprint"><code class=" hljs java">findAndHookMethod(<span class="hljs-string">"com.code.jsk.xposedexampleapp.MainActivity"</span>,loadPackageParam.classLoader, <span class="hljs-string">"check"</span>, <span class="hljs-keyword">new</span> XC_MethodReplacement() {
+            <span class="hljs-annotation">@Override</span>
+            <span class="hljs-keyword">protected</span> Object <span class="hljs-title">replaceHookedMethod</span>(MethodHookParam param) <span class="hljs-keyword">throws</span> Throwable {
+                <span class="hljs-comment">//Toast.makeText(, "Hacked!", Toast.LENGTH_SHORT).show();</span>
+                XposedBridge.log(<span class="hljs-string">"Hacked check"</span>);
+                <span class="hljs-keyword">return</span> <span class="hljs-keyword">true</span>;
+            }
+        });
+        findAndHookMethod(<span class="hljs-string">"com.code.jsk.xposedexampleapp.MainActivity"</span>, loadPackageParam.classLoader, <span class="hljs-string">"check"</span>, <span class="hljs-keyword">new</span> XC_MethodHook() {
+            <span class="hljs-annotation">@Override</span>
+            <span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title">beforeHookedMethod</span>(MethodHookParam param) <span class="hljs-keyword">throws</span> Throwable {
+                XposedBridge.log(<span class="hljs-string">"This is the beforeHookedMethod!"</span>);
+            }
+
+            <span class="hljs-annotation">@Override</span>
+            <span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title">afterHookedMethod</span>(MethodHookParam param) <span class="hljs-keyword">throws</span> Throwable {
+                XposedBridge.log(<span class="hljs-string">"This is the afterHookedMethod!"</span>);
+            }
+        });</code></pre>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180204204332319?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <p>
+     最后并没有执行afterHookedMethod 这部分代码，我也不带清楚为什么。
+     <br/>
+     最后在贴上带界面的Xposed模块的图
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180204210355118?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     简单的增加一个主活动，并添加界面即可。
+    </p>
+    <pre class="prettyprint"><code class=" hljs java"><span class="hljs-keyword">public</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MainActivity</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">AppCompatActivity</span> {</span>
+
+    <span class="hljs-annotation">@Override</span>
+    <span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title">onCreate</span>(Bundle savedInstanceState) {
+        <span class="hljs-keyword">super</span>.onCreate(savedInstanceState);
+        setContentView(R.layout.main_layout);
+        ImageView imageView = (ImageView) findViewById(R.id.imageview);
+        imageView.setImageResource(R.drawable.image3);
+    }
+}</code></pre>
+    <h4 id="到此文章也差不多结束了xposed框架的原理有兴趣的也可以自行去了解它是重写了部分zygote代码总之搞机有风险测试需谨慎别一不小心把手机变成了板砖">
+     到此文章也差不多结束了，Xposed框架的原理有兴趣的也可以自行去了解，它是重写了部分zygote代码，总之，搞机有风险，测试需谨慎。别一不小心把手机变成了板砖。
+    </h4>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79254908
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=框架&amp;t=blog" target="_blank">
+    框架
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=android&amp;t=blog" target="_blank">
+    android
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

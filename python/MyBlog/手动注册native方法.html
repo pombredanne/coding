@@ -1,0 +1,157 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   手动注册native方法
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年02月28日 18:19:55
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：43
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     这大雾何时会散去！？
+    </p>
+    <hr/>
+    <h3 id="实践">
+     实践
+    </h3>
+    <p>
+     注册native方法有两种实现方法，一种是默认的，如
+     <code>
+      JNIEXPORT void JNICALL Java_com_code_jsk_handlenative_MainActivity_checkSign
+     </code>
+     ，在
+     <code>
+      JNI_OnLoad
+     </code>
+     会自动识别该方法，从而进行注册。这种方式虽然方便了编程，但同时也让破坏者找到了进攻的路口。
+     <br/>
+     手动注册的好处是native方法的命名可以随意。
+     <br/>
+     <a href="http://blog.csdn.net/zhenyongyuan123/article/details/5862054" rel="nofollow">
+      参考文章
+     </a>
+    </p>
+    <h3 id="代码">
+     代码
+    </h3>
+    <pre class="prettyprint"><code class=" hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">native</span> <span class="hljs-keyword">int</span>  <span class="hljs-title">obviousEqual</span>();
+<span class="hljs-keyword">public</span> <span class="hljs-keyword">native</span> <span class="hljs-keyword">void</span> <span class="hljs-title">checkJSK</span>();</code></pre>
+    <pre class="prettyprint"><code class=" hljs objectivec"><span class="hljs-preprocessor">#include &lt;assert.h&gt;</span>
+<span class="hljs-preprocessor">#define JNIREG_CLASS "com/code/jsk/handlenative/MainActivity"//指定要注册的类</span>
+<span class="hljs-keyword">static</span> JNINativeMethod gmethod[] = {
+        {<span class="hljs-string">"obviousEqual"</span>,<span class="hljs-string">"()I"</span>,(<span class="hljs-keyword">void</span>*)jiangsikang},
+};
+<span class="hljs-comment">/*
+* Register several native methods for one class.
+*/</span>
+<span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> registerNativeMethods(JNIEnv* env, <span class="hljs-keyword">const</span> <span class="hljs-keyword">char</span>* className,
+                                 JNINativeMethod* gmethod, <span class="hljs-keyword">int</span> numMethods)
+{
+    jclass clazz;
+    clazz = env-&gt;FindClass(className);
+    <span class="hljs-keyword">if</span> (clazz == <span class="hljs-literal">NULL</span>) {
+        <span class="hljs-keyword">return</span> JNI_FALSE;
+    }
+    <span class="hljs-keyword">if</span> (env-&gt;RegisterNatives(clazz, gmethod, numMethods) &lt; <span class="hljs-number">0</span>) {
+        <span class="hljs-keyword">return</span> JNI_FALSE;
+    }
+
+    <span class="hljs-keyword">return</span> JNI_TRUE;
+}
+<span class="hljs-comment">/*
+* Register native methods for all classes we know about.
+*/</span>
+<span class="hljs-keyword">static</span> <span class="hljs-keyword">int</span> registerNatives(JNIEnv* env)
+{
+    <span class="hljs-keyword">if</span> (!registerNativeMethods(env,JNIREG_CLASS, gmethod,
+                               <span class="hljs-keyword">sizeof</span>(gmethod) / <span class="hljs-keyword">sizeof</span>(gmethod[<span class="hljs-number">0</span>])))
+        <span class="hljs-keyword">return</span> JNI_FALSE;
+    JNINativeMethod smethod[] = {
+            {<span class="hljs-string">"checkJSK"</span>,<span class="hljs-string">"()V"</span>,(<span class="hljs-keyword">void</span>*)checkJSK},
+    };
+    <span class="hljs-keyword">if</span> (!registerNativeMethods(env,JNIREG_CLASS, smethod,
+                               <span class="hljs-keyword">sizeof</span>(smethod) / <span class="hljs-keyword">sizeof</span>(smethod[<span class="hljs-number">0</span>])))
+        <span class="hljs-keyword">return</span> JNI_FALSE;
+    <span class="hljs-keyword">return</span> JNI_TRUE;
+}
+<span class="hljs-comment">/*
+* Set some test stuff up.
+*
+* Returns the JNI version on success, -1 on failure.
+*/</span>
+
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, <span class="hljs-keyword">void</span>* reserved)
+{
+    JNIEnv* env = <span class="hljs-literal">NULL</span>;
+    jint result = -<span class="hljs-number">1</span>;
+
+    <span class="hljs-keyword">if</span> (vm-&gt;GetEnv((<span class="hljs-keyword">void</span>**) &amp;env, JNI_VERSION_1_4) != JNI_OK) {
+        <span class="hljs-keyword">return</span> -<span class="hljs-number">1</span>;
+    }
+    assert(env != <span class="hljs-literal">NULL</span>);
+
+    <span class="hljs-keyword">if</span> (!registerNatives(env)) {<span class="hljs-comment">//注册</span>
+        <span class="hljs-keyword">return</span> -<span class="hljs-number">1</span>;
+    }
+
+    result = JNI_VERSION_1_4;
+
+    <span class="hljs-keyword">return</span> result;
+}</code></pre>
+    <p>
+     我们只需要修改
+     <code>
+      static int registerNatives(...)
+     </code>
+     这个函数即可.
+     <br/>
+     原理我不懂，拿这个模板套吧。
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     给自己点压力，真的！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79404080
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

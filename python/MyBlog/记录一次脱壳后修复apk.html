@@ -1,0 +1,124 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   记录一次脱壳后修复apk
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年03月16日 19:46:36
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：247
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     好不容易会脱壳，但是却仅仅只能得到dex文件，无法动态调试apk，这样还是不行，因此我们需要对源apk进行修复
+    </p>
+    <h3 id="准备">
+     准备
+    </h3>
+    <p>
+     首先我这里是脱了一个爱加密的壳得到
+     <code>
+      dump.dex
+     </code>
+     使用
+     <code>
+      jadx-gui
+     </code>
+     可以正常打开，说明脱壳成功了。接下来就是将
+     <code>
+      dump.dex
+     </code>
+     替换原来的
+     <code>
+      classes.dex
+     </code>
+     文件，不过不是简单的这么替换就行的
+    </p>
+    <h3 id="操作">
+     操作
+    </h3>
+    <p>
+     使用
+     <code>
+      android_Killer
+     </code>
+     打开源apk，发现
+     <code>
+      Mainactivity
+     </code>
+     已经丢失，使用
+     <code>
+      baksmali.jar
+     </code>
+     工具反编译
+     <code>
+      dump.dex
+     </code>
+     得到smali，将原smali目录替换，并删除
+     <code>
+      AndroidManifest.xml
+     </code>
+     中
+     <code>
+      application
+     </code>
+     中的
+     <code>
+      android:name
+     </code>
+     ,这是apk的入口，因为壳已经去掉了，因此入口需要修改。
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     自己多动手尝试，我这里仅仅是一种很简单的修复，有些壳会很复杂，多接触多学习。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79586084
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=android&amp;t=blog" target="_blank">
+    android
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

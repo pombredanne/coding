@@ -1,0 +1,130 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   记录一次利用AXMLEditer劫持apk启动页面
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年04月13日 01:54:26
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：10
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     参考文章：
+     <a href="http://www.wjdiankong.cn/archives/1036" rel="nofollow" target="_blank">
+      http://www.wjdiankong.cn/archives/1036
+     </a>
+    </p>
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     四哥真的很强！！学习记录了！
+    </p>
+    <h3 id="准备">
+     准备
+    </h3>
+    <pre class="prettyprint"><code class=" hljs ">baksmali
+smali
+AXMLEditer</code></pre>
+    <p>
+     首先获取apk的dex文件，利用
+     <code>
+      baksmali
+     </code>
+     反编译成smali文件。
+     <br/>
+     然后自己写个
+     <code>
+      demo
+     </code>
+     ，同样反编译成
+     <code>
+      smali
+     </code>
+     。之后重新生成
+     <code>
+      classes.dex
+     </code>
+     ，并利用压缩包重新打包。
+     <br/>
+     接下来就需要使用
+     <code>
+      AXMLEditer
+     </code>
+     工具了，可以在
+     <code>
+      github
+     </code>
+     上查看源码和使用方法。不多介绍了。修改完
+     <code>
+      AndroidManifest.xml
+     </code>
+     文件后放回压缩包中，重新签名即可。注意一下，这里的操作要注意，尤其时往
+     <code>
+      AndroidManifest.xml
+     </code>
+     中插入标签时，注意语法的格式，否则在安装时很容易报错。
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     虽然过程写的很简单，也没贴图，我这里只是做一个记录，具体的过程可以参考四哥的文章。我到最后虽然成功插入了，但是程序没有运行起来，停在微信的启动页面不动然后程序就死了，可能还是有点问题吧。
+     <br/>
+     <strong>
+      <em>
+       期待女朋友的雪花酥
+      </em>
+     </strong>
+     <br/>
+     2018/4/13/1:54
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79922557
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=反编译&amp;t=blog" target="_blank">
+    反编译
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=apk&amp;t=blog" target="_blank">
+    apk
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

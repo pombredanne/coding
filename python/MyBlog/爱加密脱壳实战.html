@@ -1,0 +1,131 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   爱加密脱壳实战
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年03月13日 13:54:05
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：260
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     看了这么久的书，总算是看完了，总归是要写点东西，记录下。这里基本过程还是参考大黄书上的内容，主要是自己动手。
+    </p>
+    <h3 id="测试">
+     测试
+    </h3>
+    <p>
+     首先我们拿到一个apk程序，肯定要先查看一些基本的信息。包名，主活动名
+     <br/>
+     所以将apk拖入AndroidKiller，提示爱加密加壳。只有两个类
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180313132640062?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以通过反编译源代码进行查看，但都看出什么有用的信息。这种apk不脱壳是完全无法下手的。
+    </p>
+    <h3 id="壳的几种方式">
+     壳的几种方式
+    </h3>
+    <p>
+     加壳之后的源apk通常可以存放在三个位置。
+     <br/>
+     一、assets目录下，由于该目录不参与编译，仅仅是打包，因此很多apk加壳会选择将原apk放在这里。
+     <br/>
+     二、lib目录下，将源apk放在so文件中，在运行时进行解密
+     <br/>
+     三、放在dex文件的结尾，这种apk往往是反编译不出来的，因为dex的格式已经被破坏，文件头的某些字段别修改(如长度，标志位，校验位)
+    </p>
+    <h3 id="脱壳">
+     脱壳
+    </h3>
+    <p>
+     在
+     <code>
+      libdvm.so
+     </code>
+     的
+     <code>
+      _Z21dvmDexFileOpenPartialPKviPP6DvmDex
+     </code>
+     函数下断点，这是加载dex的函数。
+     <br/>
+     但是我在刚开始调试的时候，发现程序还未运行到这里，就会自动退出，说明该apk做了反调试检测。
+     <br/>
+     从原理上我们可以知道反调试是通过查看/proc/[pid]/status中的TracePid的值来判断该apk是否被调试，因此呢
+     <code>
+      fopen
+     </code>
+     和
+     <code>
+      fgets
+     </code>
+     这两个函数就不可避免了，我们在这两个位置下断点，知道fopen打开status文件，fgets从文件中读取TracePid的内容时，修改该值，从而绕过反调试。
+    </p>
+    <h3 id="一点疑惑">
+     一点疑惑
+    </h3>
+    <p>
+     我在做这里案例的时候，刚开始确实是这样的，但是最后不知道怎么回事，好像反调试检测突然消失了一般。我直接就通过
+     <code>
+      _Z21dvmDexFileOpenPartialPKviPP6DvmDex
+     </code>
+     达到了脱壳的目的，中间也没有直接退出。emmm…但是我觉得原理就是这样，最终的目的都是一样的。
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     无论中间的结果如何吧，最后都是成功的脱壳，也学到了很多知识。到此有关android逆向的基本知识的差不多有了概念，剩下的就需要通过不断地实战，来积累经验了。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79539539
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=爱加密&amp;t=blog" target="_blank">
+    爱加密
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=脱壳&amp;t=blog" target="_blank">
+    脱壳
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

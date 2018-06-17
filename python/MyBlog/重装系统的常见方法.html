@@ -1,0 +1,139 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   重装系统的常见方法
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2017年05月19日 16:26:26
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：286
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     在现在这个时代，我们的生活离不开电脑，那么电脑在使用的过程中难免会出现各种各样的问题。
+     <br/>
+     主要是两个方面的问题：
+     <br/>
+     1.软件方面
+     <br/>
+     2.硬件方面
+     <br/>
+     对于软件方面的问题，最暴力最直接的方法就是重装系统，一切重头开始，当然如果有备份也可以选择备份，因此时常备份是个好习惯。
+    </p>
+    <pre><code>对于硬件方面的问题，可以通过自己的判断，更换电脑硬件（多见于内存条，显卡，硬盘的损坏），我们自己所能做的也就是这么多，对于其他的问题，则需要询问相关的专业的维修人员。
+
+本文档主要介绍重装系统的简单方法和技巧。
+由于时间和个人技术的原因不可能将所有的方法和技术一一阐述。
+此外若有兴趣还可以访问 [https://github.com/jsk2017](https://github.com/jsk2017) 获取相关文档
+
+
+
+首先，我们要进入BIOS界面。
+        有两种方法：
+        1.开机时按F2/F8/F10/ESC。具体按键与主板以及品牌相关。
+        (有的电脑在第一次进入BIOS时，会出现运行缓慢，半天加载不进去的现象)
+        2.(Win 8 /Win 10)在设置中通过启动设置选项(有的系统也叫做更改UEFI启动设置)来重启电脑以便于进入BIOS。(推荐使用这种方法)
+
+
+进入到BIOS。
+在BOOT选项卡中打开传统模式，这点很关键！
+若要想成功的重装系统必须打开传统模式(个人意见)！
+不同电脑的BIOS也会有所区别，不过本质上是一样的。
+在这台电脑上就遇上这么一个问题(Warning!)
+大概意思是要求我们先将Secure Boot Control打开，才能修改启动模式。
+接着在Security选项卡中，选择Secure Boot menu，打开Secure Boot Control。保存退出。
+到此，BIOS设置也就完成了。这是最关键的一步！
+这里其实有好多东西没讲，比如说两种启动模式的区别与联系，以及对BIOS更深沉的操作！
+不过总的来说，我们的目的就是想法设法的打开传统模式即可。
+
+
+接下来就该我们的PE登场了，PE就是一个小型的计算机系统(一般只有200多MB)，我们需要一个装有PE的U盘。可以通过某些软件来将PE刻到U盘中(这里不做介绍)。
+    首先选择重U盘启动(同样的按F2/F8/F10/ESC，以选择启动方式),
+    进入PE.
+    不同的PE，界面也会有所不同！
+    打开DiskGenius(有的PE装的是其他分区软件，大概的操作相同，在此我只介绍一种)。
+    这台电脑可以看到有5个分区。
+    1.我们将所有分区删除，保存更改
+    2.在硬盘选项卡中选择更改分区表格式为MBR。保存更改
+    3.快速分区，根据自己的需求来分(但是最多只能允许4个分区，其他默认即可)
+    接下来就是使用软件，重装系统，选择所使用的镜像文件。
+    之后就是静静的等侯。
+</code></pre>
+    <p>
+     到此系统也就装完了！不同的镜像决定着你装什么系统。
+    </p>
+    <p>
+     这里补充这么几点。
+     <br/>
+     1.关于分区表格式。分区表格式有两种MBR和GUID,这两种个分别对应于两种不同的引导方式(BIOS设置).MBR对应的是传统模式，GUID对应的是UEFI模式。其实也不能这么讲，因为这是两种不同层面上的东西。可能要深入到两种引导方式，MBR就是传统的模式，系统装在哪个盘就去哪个盘里寻找相应的引导文件。而GUID则是通过另外的一块硬盘，寻找相关的UEFI引导文件，从而进入的系统。(我也讲不好)如果大家想深入的了解这方面的知识的建议去学习下操作系统原理。传统模式所对应的分区表格式必须是MBR格式。
+     <br/>
+     这里我就不细讲了，打字好累哦！听我口头阐述吧！
+     <br/>
+     2.有的同学他可能自己也重装过系统，他们在装的时候根本没有那么麻烦。那这是为什么呢？
+     <br/>
+     其实呢，我推荐的方法是一本万利的方法，如果你查看相关配置的时候发现，发现已经不需要更改了，那么直接使用相关的重装软件，将镜像恢复到C盘即可。
+    </p>
+    <p>
+     最后的结尾，在提几个问题，如果有感兴趣的同学可以去思考研究下。
+     <br/>
+     1.为什么我们一开始装的系统是UEFI引导模式的呢？
+     <br/>
+     2.我们能否通过UEFI模式重装系统，并且不该变分区表类型(即使用GUID类型)，或者说在系统重装后能否设置成这种模式。
+    </p>
+    <p>
+     关于这方面我并没研究，希望有兴趣的同学可以去研究下，并将研究的结论分享给大家。
+     <br/>
+     *
+    </p>
+    <hr/>
+    <p>
+     经过上次U盘安装PE+kali linux 我对系统引导的理解更加的深入了。这里面其实有很大的文章有很多可以学习的地方，不过我觉得吧，主要还是得抓住一个实用性，我们安装多个系统主要还是为了实用、方便。有兴趣的可以看看我的另外一篇文章《实战U盘装PE+kali_linux_persis》，里面有提到如何进行引导和相关参数的配置。
+    </p>
+    <p>
+     *
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/72540798
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=重装系统&amp;t=blog" target="_blank">
+    重装系统
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6927856" target="_blank">
+    装系统
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

@@ -1,0 +1,194 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   angr学习【五】
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年05月16日 19:40:05
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：25
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     时间真的不多咯。这次来看看如何编写简单高效的angr脚本，如何进行设置约束条件。
+    </p>
+    <h3 id="题目五unbreakable">
+     题目五unbreakable
+    </h3>
+    <p>
+     <a href="https://github.com/angr/angr-doc/tree/master/examples/google2016_unbreakable_1" rel="nofollow">
+      题目链接
+     </a>
+     <br/>
+     我先贴上自己写的粗糙的脚本：
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment"># -*-coding:utf-8-*-</span>
+
+<span class="hljs-keyword">from</span> angr <span class="hljs-keyword">import</span> *
+<span class="hljs-keyword">import</span> logging,claripy,archinfo
+logging.getLogger(<span class="hljs-string">'angr.manager'</span>).setLevel(logging.DEBUG)
+START_ADDR = <span class="hljs-number">0x4005bd</span> 
+AVOID_ADDR = <span class="hljs-number">0x400850</span> 
+FIND_ADDR = <span class="hljs-number">0x40083E</span> 
+INPUT_LENGTH = <span class="hljs-number">0xf2</span> - <span class="hljs-number">0xc0</span> + <span class="hljs-number">1</span> 
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">main</span><span class="hljs-params">()</span>:</span>
+    p = Project(<span class="hljs-string">"unbreakable-enterprise-product-activation"</span>,auto_load_libs=<span class="hljs-keyword">False</span>)
+    arg1=claripy.BVS(<span class="hljs-string">"arg1"</span>,<span class="hljs-number">0x43</span>*<span class="hljs-number">8</span>)
+
+    args=[p.filename,arg1]
+    print(<span class="hljs-string">'adding BitVectors and constraints'</span>)
+    <span class="hljs-comment"># state = p.factory.entry_state(addr=START_ADDR, add_options={options.LAZY_SOLVES})</span>
+    state = p.factory.entry_state(args=args,add_options={options.LAZY_SOLVES})
+    state.libc.buf_symbolic_bytes=<span class="hljs-number">0x43</span> + <span class="hljs-number">1</span>
+    <span class="hljs-keyword">for</span> byte <span class="hljs-keyword">in</span> arg1.chop(<span class="hljs-number">8</span>):
+        state.add_constraints(byte != <span class="hljs-string">'\x00'</span>) <span class="hljs-comment"># null</span>
+        state.add_constraints(byte &gt;= <span class="hljs-string">' '</span>) <span class="hljs-comment"># '\x20'</span>
+        state.add_constraints(byte &lt;= <span class="hljs-string">'~'</span>) <span class="hljs-comment"># '\x7e'</span>
+    sm = p.factory.simulation_manager(state,threads=<span class="hljs-number">4</span>)
+    res=sm.explore(find=FIND_ADDR, avoid=AVOID_ADDR)
+    <span class="hljs-keyword">print</span> res
+    <span class="hljs-keyword">for</span> pp <span class="hljs-keyword">in</span> res.found:
+        <span class="hljs-keyword">print</span> pp.posix.dumps(<span class="hljs-number">1</span>)[:pp.posix.dumps(<span class="hljs-number">1</span>).find(<span class="hljs-string">"\x00"</span>)]
+        p=pp.solver.eval(arg1,cast_to=str)
+        <span class="hljs-keyword">print</span> p[:pp.solver.eval(arg1,cast_to=str).find(<span class="hljs-string">"}"</span>)]
+<span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">'__main__'</span>:
+    main()</code></pre>
+    <p>
+     这么跑下来速度还行，不算慢，但是写得还不够好。
+     <br/>
+     我在网上找到一个比较好的
+     <a href="https://hitcon.org/2016/CMT/slide/day1-r1-a-1.pdf" rel="nofollow">
+      文档
+     </a>
+     可以参考一下。
+    </p>
+    <h3 id="进行条件约束">
+     进行条件约束
+    </h3>
+    <p>
+     我们使用了如下代码，设置了agrs参数，可以看出来flag长度为0x43，如果不对条件进行约束那么会导致无用的路径产生。
+    </p>
+    <pre class="prettyprint"><code class=" hljs ini"><span class="hljs-setting">arg1=<span class="hljs-value">claripy.BVS(<span class="hljs-string">"arg1"</span>,<span class="hljs-number">0</span>x43*<span class="hljs-number">8</span>)</span></span></code></pre>
+    <p>
+     我们需要对其进行约束。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180516191527115?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     类似如下代码vec
+    </p>
+    <pre class="prettyprint"><code class=" hljs perl"><span class="hljs-keyword">state</span>.solver.And(<span class="hljs-keyword">vec</span> &gt;= <span class="hljs-keyword">ord</span>(<span class="hljs-string">' '</span>), <span class="hljs-keyword">vec</span> &lt;= <span class="hljs-keyword">ord</span>(<span class="hljs-string">'~'</span>))</code></pre>
+    <pre class="prettyprint"><code class=" hljs cs"> <span class="hljs-keyword">for</span> <span class="hljs-keyword">byte</span> <span class="hljs-keyword">in</span> arg1.chop(<span class="hljs-number">8</span>):
+        state.add_constraints(<span class="hljs-keyword">byte</span> != <span class="hljs-string">'\x00'</span>) <span class="hljs-preprocessor"># null</span>
+        state.add_constraints(<span class="hljs-keyword">byte</span> &gt;= <span class="hljs-string">' '</span>) <span class="hljs-preprocessor"># '\x20'</span>
+        state.add_constraints(<span class="hljs-keyword">byte</span> &lt;= <span class="hljs-string">'~'</span>) <span class="hljs-preprocessor"># '\x7e'</span></code></pre>
+    <p>
+     这都是对输入进行约束。
+     <br/>
+     这里要注意有一个选项。
+     <code>
+      lazy_solves
+     </code>
+     ,如果不加这个条件运行很慢，而且最终会报错。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/2018051619291327?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzMzNDM4NzMz/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     使用angr存在explosion的问题也就是路径爆炸，会导致出错。这时候需要我们进行合理的条件约束才行。
+     <br/>
+     github给出了更好的代码实现，摘抄如下;
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">import</span> angr
+
+
+START_ADDR = <span class="hljs-number">0x4005bd</span> <span class="hljs-comment"># first part of program that does computation</span>
+AVOID_ADDR = <span class="hljs-number">0x400850</span> <span class="hljs-comment"># address of function that prints wrong</span>
+FIND_ADDR = <span class="hljs-number">0x400830</span> <span class="hljs-comment"># address of function that prints correct</span>
+INPUT_ADDR = <span class="hljs-number">0x6042c0</span> <span class="hljs-comment"># location in memory of user input</span>
+INPUT_LENGTH = <span class="hljs-number">0xf2</span> - <span class="hljs-number">0xc0</span> + <span class="hljs-number">1</span> <span class="hljs-comment"># derived from the first and last character</span>
+                               <span class="hljs-comment"># reference in data</span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">extract_memory</span><span class="hljs-params">(state)</span>:</span>
+    <span class="hljs-string">"""Convience method that returns the flag input memory."""</span>
+    <span class="hljs-keyword">return</span> state.solver.eval(state.memory.load(INPUT_ADDR, INPUT_LENGTH), cast_to=str)
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">char</span><span class="hljs-params">(state, n)</span>:</span>
+    <span class="hljs-string">"""Returns a symbolic BitVector and contrains it to printable chars for a given state."""</span>
+    vec = state.solver.BVS(<span class="hljs-string">'c{}'</span>.format(n), <span class="hljs-number">8</span>, explicit_name=<span class="hljs-keyword">True</span>)
+    <span class="hljs-keyword">return</span> vec, state.solver.And(vec &gt;= ord(<span class="hljs-string">' '</span>), vec &lt;= ord(<span class="hljs-string">'~'</span>))
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">main</span><span class="hljs-params">()</span>:</span>
+    p = angr.Project(<span class="hljs-string">'unbreakable'</span>)
+
+    print(<span class="hljs-string">'adding BitVectors and constraints'</span>)
+    state = p.factory.blank_state(addr=START_ADDR, add_options={angr.options.LAZY_SOLVES})
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(INPUT_LENGTH):
+        c, cond = char(state, i)
+        <span class="hljs-comment"># the first command line argument is copied to INPUT_ADDR in memory</span>
+        <span class="hljs-comment"># so we store the BitVectors for angr to manipulate</span>
+        state.memory.store(INPUT_ADDR + i, c)
+        state.add_constraints(cond)
+
+    print(<span class="hljs-string">'creating path and explorer'</span>)
+    ex = p.surveyors.Explorer(start=state, find=(FIND_ADDR,), avoid=(AVOID_ADDR,))
+
+    print(<span class="hljs-string">'running explorer'</span>)
+    ex.run()
+
+    flag = extract_memory(ex._f) <span class="hljs-comment"># ex._f is equiv. to ex.found[0]</span>
+    print(<span class="hljs-string">'found flag: {}'</span>.format(flag))
+
+    <span class="hljs-keyword">return</span> flag
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">test</span><span class="hljs-params">()</span>:</span>
+    <span class="hljs-keyword">assert</span> main() == <span class="hljs-string">'CTF{0The1Quick2Brown3Fox4Jumped5Over6The7Lazy8Fox9}'</span>
+
+<span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">'__main__'</span>:
+    main()</code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     条件约束感觉还是有点难的，首先要掌握如何编写约束条件，然后还要注意该如何去更好的约束。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80341841
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7599290" target="_blank">
+    Re
+   </a>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

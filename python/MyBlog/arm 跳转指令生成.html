@@ -1,0 +1,101 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   arm 跳转指令生成
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年04月11日 13:46:52
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：13
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     参考文章
+     <a href="http://mp.weixin.qq.com/s/YouYa-dZyJOmpheC7PAt1w" rel="nofollow" target="_blank">
+      http://mp.weixin.qq.com/s/YouYa-dZyJOmpheC7PAt1w
+     </a>
+    </p>
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     通过阅读这篇文章，你可以知道跳转指令是如果生成的，并做出相应的修改。
+    </p>
+    <h3 id="内容">
+     内容
+    </h3>
+    <p>
+     这里拿一个游戏作为破解的项目，然后拿到so文件后，查看关键函数的结构，发现success和failed逻辑类似，因此尝试修改调用指令，达到修改逻辑的目的。
+     <br/>
+     公式:
+     <code>
+      (B-(A+8))/4
+     </code>
+     其中B是目的地址，A是当前指令的地址。之后取后六位进行取反 并加上对应的操作码。
+    </p>
+    <p>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180411134032317?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <pre class="prettyprint"><code class=" hljs css">例如：<span class="hljs-tag">B</span><span class="hljs-pseudo">:22B640</span>
+<span class="hljs-tag">A</span><span class="hljs-pseudo">:37F120</span>
+根据公式得到<span class="hljs-pseudo">:FFFFFFFFFFAB146</span>
+得到后六位取反，并加上操作码<span class="hljs-tag">eb</span> <span class="hljs-pseudo">:46</span> <span class="hljs-tag">b1</span> <span class="hljs-tag">fa</span> <span class="hljs-tag">eb</span>
+<span class="hljs-tag">eb</span>是<span class="hljs-tag">BL</span>指令的操作码！</code></pre>
+    <p>
+     B对应的操作码为EA
+     <br/>
+     BEQ对应的是0A
+     <br/>
+     自己动手去算一下，就会明白了！！
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     主要还是了解一下指令的生成。完毕！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79895363
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=arm&amp;t=blog" target="_blank">
+    arm
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

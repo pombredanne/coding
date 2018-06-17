@@ -1,0 +1,93 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   adb安装时常见错误总结
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年04月13日 01:17:28
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：12
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     这里总结一下常见的apk安装失败的错误代码以及解决办法
+    </p>
+    <h3 id="问题一">
+     问题一、
+    </h3>
+    <pre class="prettyprint"><code class=" hljs ">INSTALL_PARSE_FAILED_INCONSISTENT_CERTIFICATES</code></pre>
+    <p>
+     这是因为同一个安装包但是签名不一致导致的，必须先将原apk卸载之后，再进行安装，即使使用
+     <code>
+      -r
+     </code>
+     也不能正常安装
+    </p>
+    <h3 id="问题二">
+     问题二
+    </h3>
+    <pre class="prettyprint"><code class=" hljs ">INSTALL_PARSE_FAILED_MANIFEST_MALFORMED</code></pre>
+    <p>
+     这是因为你工程的AndroidManifest.xml 配置有误，这时需要仔细检查你的xml配置文件是否正确。
+    </p>
+    <h3 id="问题三">
+     问题三
+    </h3>
+    <pre class="prettyprint"><code class=" hljs ">INSTALL_PARSE_FAILED_NO_CERTIFICATES</code></pre>
+    <p>
+     这是由于你的安装包没有签名造成的，手动签名一下即可
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     还有待补充。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79922504
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=apk&amp;t=blog" target="_blank">
+    apk
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

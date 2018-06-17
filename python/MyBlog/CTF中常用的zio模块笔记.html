@@ -1,0 +1,106 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   CTF中常用的zio模块笔记
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2017年07月22日 16:23:47
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：460
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <p>
+     哈哈。又到了写博客的时间了。
+     <br/>
+     zio这个模块用了这么久，却一直没时间去看看 源码，真的是很可惜。
+     <br/>
+     源码地址：
+     <a href="https://github.com/zTrix/zio/blob/master/zio.py" rel="nofollow" target="_blank">
+      https://github.com/zTrix/zio/blob/master/zio.py
+     </a>
+     <br/>
+     建议大家去看看。
+     <br/>
+     废话不多说让我们看看这个强大的工具都有哪些方法。
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">COLORED</span><span class="hljs-params">(f, color = <span class="hljs-string">'cyan'</span>, on_color = None, attrs = None)</span>:</span> <span class="hljs-keyword">return</span> <span class="hljs-keyword">lambda</span> s : colored(f(s), color, on_color, attrs)</code></pre>
+    <p>
+     颜色还是挺常用的
+     <br/>
+     我一般会这么初始化zio
+    </p>
+    <pre class="prettyprint"><code class=" hljs bash">io=zio(target,timeout=<span class="hljs-number">10000</span>,print_<span class="hljs-built_in">read</span>=COLORED(RAW,<span class="hljs-string">'red'</span>),print_write=COLORED(RAW,<span class="hljs-string">'green'</span>))</code></pre>
+    <p>
+     这些方法大家可以多去了解一下
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">RAW</span><span class="hljs-params">(s)</span>:</span> <span class="hljs-keyword">return</span> str(s)</code></pre>
+    <p>
+     来看一下
+     <code>
+      __init__
+     </code>
+     :
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">__init__</span><span class="hljs-params">(self, target, stdin = PIPE, stdout = TTY_RAW, print_read = RAW, print_write = RAW, timeout = <span class="hljs-number">8</span>, cwd = None, env = None, sighup = signal.SIG_DFL, write_delay = <span class="hljs-number">0.05</span>, ignorecase = False, debug = None)</span>:</span></code></pre>
+    <p>
+     参数相当的多，不过常用的也就没几个
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">print_write</span><span class="hljs-params">(self, value)</span>:</span>
+ <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">print_read</span><span class="hljs-params">(self, value)</span>:</span>
+ <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">interact</span><span class="hljs-params">(self, escape_character=chr<span class="hljs-params">(<span class="hljs-number">29</span>)</span>, input_filter = None, output_filter = None, raw_rw = True)</span>:</span>
+ <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">writeline</span><span class="hljs-params">(self, s = <span class="hljs-string">''</span>)</span>:</span>
+ <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">write</span><span class="hljs-params">(self, s)</span>:</span>
+ <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">read</span><span class="hljs-params">(self, size = None, timeout = -<span class="hljs-number">1</span>)</span>:</span>
+ <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">read_until_timeout</span><span class="hljs-params">(self, timeout = <span class="hljs-number">0.05</span>)</span>:</span>
+ <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">read_until</span><span class="hljs-params">(self, pattern_list, timeout = -<span class="hljs-number">1</span>, searchwindowsize = None)</span>:</span>
+ <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">gdb_hint</span><span class="hljs-params">(self, breakpoints = None, relative = None, extras = None)</span>:</span></code></pre>
+    <p>
+     。。。这篇文章写得有点随意了。
+     <br/>
+     不过还是希望大家多去看看源码，不要嫌烦哦。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/75747782
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=源码&amp;t=blog" target="_blank">
+    源码
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6945018" target="_blank">
+    CTF
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

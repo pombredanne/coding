@@ -1,0 +1,187 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   记录一次Frida框架的使用
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年03月17日 17:28:39
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：76
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     最近了解到Frida这个框架，感觉很神奇，同样是hook，但是不用像xposed那么麻烦。而且安装也十分的简单。安装可以看
+     <a href="http://blog.csdn.net/qq_33438733/article/details/79588451" rel="nofollow">
+      这篇文章
+     </a>
+    </p>
+    <h3 id="xposedhook">
+     XposedHook
+    </h3>
+    <p>
+     这里用xposed框架实现了一遍。比较简单，就不多讲了。
+     <br/>
+     主要代码如下：
+    </p>
+    <pre class="prettyprint"><code class=" hljs java"><span class="hljs-keyword">public</span> <span class="hljs-keyword">void</span> <span class="hljs-title">handleLoadPackage</span>(XC_LoadPackage.LoadPackageParam loadPackageParam) <span class="hljs-keyword">throws</span> Throwable {
+        <span class="hljs-keyword">if</span>(loadPackageParam.packageName.equals(<span class="hljs-string">"com.example.seccon2015.rock_paper_scissors"</span>)){
+            Log.d(<span class="hljs-string">"hx"</span>, <span class="hljs-string">"handleLoadPackage: "</span>+loadPackageParam.packageName);
+            XposedHelpers.findAndHookMethod(<span class="hljs-string">"com.example.seccon2015.rock_paper_scissors.MainActivity"</span>, loadPackageParam.classLoader, <span class="hljs-string">"onCreate"</span>, Bundle.class, <span class="hljs-keyword">new</span> XC_MethodHook() {
+                <span class="hljs-annotation">@Override</span>
+                <span class="hljs-keyword">protected</span> <span class="hljs-keyword">void</span> <span class="hljs-title">afterHookedMethod</span>(MethodHookParam param) <span class="hljs-keyword">throws</span> Throwable {
+                    Method calc = XposedHelpers.findMethodBestMatch(param.thisObject.getClass(),<span class="hljs-string">"calc"</span>);
+                    <span class="hljs-keyword">int</span> resultkey = (<span class="hljs-keyword">int</span>)calc.invoke(param.thisObject);
+                    String flag = <span class="hljs-string">"SECCON{"</span> + String.valueOf((<span class="hljs-number">1000</span> + resultkey) * <span class="hljs-number">107</span>) + <span class="hljs-string">"}"</span>;
+                    Log.d(<span class="hljs-string">"hx"</span>, <span class="hljs-string">"afterHookedMethod: "</span>+flag);
+                }
+            });
+        }<span class="hljs-keyword">else</span>{
+            XposedBridge.log(<span class="hljs-string">"can't find the package!"</span>);
+        }</code></pre>
+    <h3 id="fridahook">
+     FridaHook
+    </h3>
+    <p>
+     下面是官网给的代码
+    </p>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-keyword">import</span> frida, sys
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">on_message</span><span class="hljs-params">(message, data)</span>:</span>
+    <span class="hljs-keyword">if</span> message[<span class="hljs-string">'type'</span>] == <span class="hljs-string">'send'</span>:
+        print(<span class="hljs-string">"[*] {0}"</span>.format(message[<span class="hljs-string">'payload'</span>]))
+    <span class="hljs-keyword">else</span>:
+        print(message)
+
+jscode = <span class="hljs-string">"""
+Java.perform(function () {
+    // Function to hook is defined here
+    var MainActivity = Java.use('com.example.seccon2015.rock_paper_scissors.MainActivity');
+
+    // Whenever button is clicked
+    MainActivity.onClick.implementation = function (v) {
+        // Show a message to know that the function got called
+        send('onClick');
+
+        // Call the original onClick handler
+        this.onClick(v);
+
+        // Set our values after running the original onClick handler
+        this.m.value = 0;
+        this.n.value = 1;
+        this.cnt.value = 999;
+
+        // Log to the console that it's done, and we should have the flag!
+        console.log('Done:' + JSON.stringify(this.cnt));
+    };
+});
+"""</span>
+
+process = frida.get_remote_device().attach(<span class="hljs-string">'com.example.seccon2015.rock_paper_scissors'</span>)
+script = process.create_script(jscode)
+script.on(<span class="hljs-string">'message'</span>, on_message)
+print(<span class="hljs-string">'[*] Running CTF'</span>)
+script.load()
+sys.stdin.read()</code></pre>
+    <p>
+     重点来说一下这个的使用。
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm"><span class="hljs-preprocessor"># 使用frida attach上需要注入的app</span>
+process=frida<span class="hljs-preprocessor">.get</span>_remote_device()<span class="hljs-preprocessor">.attach</span>(<span class="hljs-string">""</span>)</code></pre>
+    <pre class="prettyprint"><code class=" hljs vala"><span class="hljs-preprocessor"># 使用create_script往app中注入js代码块</span>
+script=process.create_script(jscode)</code></pre>
+    <pre class="prettyprint"><code class=" hljs sql"># 注册一个代码返回数据的<span class="hljs-operator"><span class="hljs-keyword">handler</span>
+script.<span class="hljs-keyword">on</span>(<span class="hljs-string">'message'</span>,on_message)</span></code></pre>
+    <pre class="prettyprint"><code class=" hljs vala"><span class="hljs-preprocessor"># 加载js代码块</span>
+script.load()</code></pre>
+    <pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment"># on_message用于接受js代码返回的数据</span>
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">on_message</span><span class="hljs-params">(message,data)</span>:</span>
+    <span class="hljs-keyword">if</span> message[<span class="hljs-string">'type'</span>]==<span class="hljs-string">"send"</span>:
+        print(<span class="hljs-string">"[*] {0}"</span>.format(message[<span class="hljs-string">'payload'</span>]))
+    <span class="hljs-keyword">else</span>:
+        <span class="hljs-keyword">print</span> message</code></pre>
+    <pre class="prettyprint"><code class=" hljs php"><span class="hljs-comment">#定义需要hook的类</span>
+Java.<span class="hljs-keyword">use</span>(<span class="hljs-string">'...'</span>);
+</code></pre>
+    <pre class="prettyprint"><code class=" hljs php"><span class="hljs-comment">#这里hook了MainActivity类的onClick方法并重写</span>
+MainActivity.onClick.implementation = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(v)</span>{</span>
+        send(<span class="hljs-string">"click"</span>);
+        <span class="hljs-comment">//this.onClick(v);</span>
+        <span class="hljs-comment">//console.log是为了向控制台输出</span>
+        console.log(<span class="hljs-string">"Done"</span>);
+    };</code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     参考链接：
+     <br/>
+     <a href="https://www.frida.re/docs/examples/android/" rel="nofollow">
+      原文
+     </a>
+     <br/>
+     <a href="https://github.com/ctfs/write-ups-2015/tree/master/seccon-quals-ctf-2015/binary/reverse-engineering-android-apk-1" rel="nofollow">
+      apk下载
+     </a>
+     <br/>
+     <a href="https://www.frida.re/docs/functions/" rel="nofollow">
+      https://www.frida.re/docs/functions/
+     </a>
+     <br/>
+     <a href="https://www.frida.re/docs/messages/" rel="nofollow">
+      https://www.frida.re/docs/messages/
+     </a>
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79588544
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=Frida&amp;t=blog" target="_blank">
+    Frida
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=hook&amp;t=blog" target="_blank">
+    hook
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=android&amp;t=blog" target="_blank">
+    android
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

@@ -1,0 +1,234 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   关于新手安装kali-linux系统
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2017年05月19日 16:43:47
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：1558
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     这次试着安装kali linux2017.1版本，实属不易。经过一天的努力终于在虚拟机和U盘上装上了牛逼哄哄的kali linux系统，据说这是黑客渗透测试最常用的系统。
+     <br/>
+     在安装的过程中遇到了许许多多的问题，这也是我第一次装linux系统，尤其是将其安装到U盘上。
+    </p>
+    <h2 id="一准备">
+     一、准备
+    </h2>
+    <p>
+     首先我们得要选择我们要安装的系统版本。刚开始我下了kali linux1.0.9最原始的版本，在虚拟机上安装之后，在安装vm-tools时发现加了很多更新源，但是就是更新不了。这是很郁闷的一件事情，之后再网上找了很多的资料，总的就是版本太老了，国内的更新源不支持更新了，连接国外的更新源又连不上去(原因你懂的！)。没办法只能重新下个新版本吧的系统，最新的版本是2018.1.没办法下呗！官网提供的下载连接不支持断点续传，这就弄得很麻烦，经常失败，建议找一个百度云的连接。
+    </p>
+    <h2 id="二安装">
+     二、安装
+    </h2>
+    <p>
+     下载完之后，虚拟机上的安装同1.0.9版本，没有任何问题，在安装进U盘时就会出现各种问题，主要的就是在安装文件系统时经常出错，因为linux的文件系统采用的ext4不同与windows下的FAT43或NTFS，将U盘直接删除分区，未经格式化使用，在装系统时，会自动将U盘进行分区，或者自己手动的进行分区。
+     <br/>
+     如果仅仅是在虚拟中安装，那么就简单很多了，网上有很多图文教程，我这里就不贴图了。
+    </p>
+    <h2 id="三配置">
+     三、配置
+    </h2>
+    <p>
+     在一切安装完成之后，之后便是一些基础的配置操作。
+     <br/>
+     首先由于未创建用户，只能使用root账户登录，我们需要创建一个新用户，在2017.1版本下任何一个账户都是需要密码的，之后便是修改更新源，建议使用阿里云镜像。
+    </p>
+    <pre class="prettyprint"><code class=" hljs php">Vim /etc/apt/sources.<span class="hljs-keyword">list</span>  编辑更新源</code></pre>
+    <p>
+     对了。更新源推荐使用官方指定的源，可以上kali 的官网看看，里面有很多的文档对我们的帮助很大(不过都是英文的，要做好心理准备)
+     <br/>
+     <code>
+      Rolling版更新源 deb http://http.kali.org/kali kali-rolling main contrib non-free
+     </code>
+     <br/>
+     <code>
+      中科大的源 deb http://mirrors.ustc.edu.cn/kali kali-rolling main non-free contrib
+     </code>
+     <br/>
+     大家上官网搜搜。比较好用的就这两个吧，一般来说还是用官方的源好了，虽然更新的时候慢。
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso">apt<span class="hljs-attribute">-get</span> udate       
+apt<span class="hljs-attribute">-get</span> dist<span class="hljs-attribute">-upgrade</span>
+apt<span class="hljs-attribute">-get</span> install fcitx<span class="hljs-attribute">-googlepinyin</span>  安装谷歌中文输入法，总感觉还是没有windows下的好使</code></pre>
+    <p>
+     这得会使用基本的vim操作才行哦！不会的上网查查、说实话kali linux 的界面很棒哦。
+     <br/>
+     不知道为什么，试了一上午还是失败了，可能是U盘坏了吧，换了一个新的U盘试试如果还是不行，那就算咯！
+    </p>
+    <p>
+     之后就是安装 一些基本的使用工具了。推荐看这个文章
+     <a href="http://www.cnblogs.com/lr393993507/p/5345007.html" rel="nofollow">
+      http://www.cnblogs.com/lr393993507/p/5345007.html
+     </a>
+     <br/>
+     按着这篇文章的设置来弄基本上没有什么问题。
+    </p>
+    <h2 id="安装vmtools">
+     安装vmtools
+    </h2>
+    <p>
+     kali2.0之后的版本，由于vmware更新不及时，所以无法通过自带的vmtools进行安装。在更新完系统后。使用
+     <code>
+      apt-get install open-vm-tools-desktop fuse
+     </code>
+     <br/>
+     其实安装vmtools最主要就是为了两个功能，共享剪切板以及共享文件。但是很多时候由于一些错误的安装方式会导致共享文件夹不可用。这里我在官网上找到了解决问题的方法。
+     <br/>
+     <a href="https://docs.kali.org/general-use/install-vmware-tools-kali-guest" rel="nofollow">
+      官网链接
+     </a>
+     <br/>
+     既然是新手教程，我还是将官网中的内容在复述一遍吧。
+     <br/>
+     如果是Rolling版本使用下面的命令安装vmtools：
+    </p>
+    <pre class="prettyprint"><code class=" hljs sql">apt <span class="hljs-operator"><span class="hljs-keyword">update</span> &amp;&amp; apt -y <span class="hljs-keyword">full</span>-upgrade
+# Reboot now <span class="hljs-keyword">in</span> <span class="hljs-keyword">case</span> you have updated <span class="hljs-keyword">to</span> a new kernel. Once rebooted :
+apt -y install <span class="hljs-keyword">open</span>-vm-tools-desktop fuse
+reboot</span></code></pre>
+    <p>
+     新版的vmtools，默认是不支持共享文件夹的，因此我们可以运行如下脚本，以支持共享文件夹：
+    </p>
+    <pre class="prettyprint"><code class=" hljs bash">cat &lt;&lt;EOF &gt; /usr/local/sbin/mount-shared-folders
+<span class="hljs-shebang">#!/bin/bash</span>
+vmware-hgfsclient | <span class="hljs-keyword">while</span> <span class="hljs-built_in">read</span> folder; <span class="hljs-keyword">do</span>
+  vmwpath=<span class="hljs-string">"/mnt/hgfs/\${folder}"</span>
+  <span class="hljs-built_in">echo</span> <span class="hljs-string">"[i] Mounting \${folder}   (\${vmwpath})"</span>
+  mkdir -p <span class="hljs-string">"\${vmwpath}"</span>
+  umount <span class="hljs-operator">-f</span> <span class="hljs-string">"\${vmwpath}"</span> <span class="hljs-number">2</span>&gt;/dev/null
+  vmhgfs-fuse -o allow_other -o auto_unmount <span class="hljs-string">".host:/\${folder}"</span> <span class="hljs-string">"\${vmwpath}"</span>
+<span class="hljs-keyword">done</span>
+sleep <span class="hljs-number">2</span>s
+EOF
+chmod +x /usr/local/sbin/mount-shared-folders</code></pre>
+    <p>
+     这个脚本的作用是在/usr/local/sbin/目录下新建一个mount-shared-folders文件，并赋予可执行权限。
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso">ln <span class="hljs-attribute">-sf</span> /usr/<span class="hljs-built_in">local</span>/sbin/mount<span class="hljs-attribute">-shared</span><span class="hljs-attribute">-folders</span> /root/Desktop/mount<span class="hljs-attribute">-shared</span><span class="hljs-attribute">-folders</span><span class="hljs-built_in">.</span>sh
+gsettings <span class="hljs-built_in">set</span> org<span class="hljs-built_in">.</span>gnome<span class="hljs-built_in">.</span>nautilus<span class="hljs-built_in">.</span>preferences executable<span class="hljs-attribute">-text</span><span class="hljs-attribute">-activation</span> <span class="hljs-string">'ask'</span></code></pre>
+    <p>
+     然后通过ln -sf创建一个硬链接，相当于windows下的快捷方式。这里要注意一点kali中文版中是没有Desktop目录的，需要将Desktop改为桌面，否则会一直报错。
+     <br/>
+     以上是官方给的方法，其实只需要新建一个.sh文件，并赋予可执行权限
+     <br/>
+     将下面的代码复制进去即可：
+    </p>
+    <pre class="prettyprint"><code class=" hljs bash"><span class="hljs-shebang">#!/bin/bash</span>
+vmware-hgfsclient | <span class="hljs-keyword">while</span> <span class="hljs-built_in">read</span> folder; <span class="hljs-keyword">do</span>
+  vmwpath=<span class="hljs-string">"/mnt/hgfs/<span class="hljs-variable">${folder}</span>"</span>
+  <span class="hljs-built_in">echo</span> <span class="hljs-string">"[i] Mounting <span class="hljs-variable">${folder}</span>   (<span class="hljs-variable">${vmwpath}</span>)"</span>
+  mkdir -p <span class="hljs-string">"<span class="hljs-variable">${vmwpath}</span>"</span>
+  umount <span class="hljs-operator">-f</span> <span class="hljs-string">"<span class="hljs-variable">${vmwpath}</span>"</span> <span class="hljs-number">2</span>&gt;/dev/null
+  vmhgfs-fuse -o allow_other -o auto_unmount <span class="hljs-string">".host:/<span class="hljs-variable">${folder}</span>"</span> <span class="hljs-string">"<span class="hljs-variable">${vmwpath}</span>"</span>
+<span class="hljs-keyword">done</span>
+sleep <span class="hljs-number">2</span>s</code></pre>
+    <p>
+     最后在终端运行。当然最后为了方便我们还可以在桌面创建一个共享文件夹的快捷方式：
+    </p>
+    <pre class="prettyprint"><code class=" hljs coffeescript">ln -sf <span class="hljs-regexp">/mnt/hgfs/</span>{你的共享文件夹} <span class="hljs-regexp">/root/</span>桌面/myshare</code></pre>
+    <p>
+     注意：共享文件夹首先要先在Vmware软件中开启才行。
+    </p>
+    <p>
+     至于其他版本我就不做一一说明了。详见官网！！
+     <br/>
+     如果你使用中文版的kali，那么免不了会用到中文输入法：
+    </p>
+    <pre class="prettyprint"><code class=" hljs cs">apt-<span class="hljs-keyword">get</span> install ibus ibus-pinyin
+apt-<span class="hljs-keyword">get</span> install fcitx-googlepinyin
+apt-<span class="hljs-keyword">get</span> install -f  <span class="hljs-preprocessor">#如果中间出现依赖问题</span></code></pre>
+    <p>
+     其他常用的工具、软件：
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso">flash安装： apt<span class="hljs-attribute">-get</span> install flashplugin<span class="hljs-attribute">-nonfree</span>
+update<span class="hljs-attribute">-flashplugin</span><span class="hljs-attribute">-nonfree</span> <span class="hljs-subst">--</span>install </code></pre>
+    <p>
+     启动终端快捷键：
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso">系统<span class="hljs-subst">-&gt;</span>设置<span class="hljs-subst">-&gt;</span>快捷键
+添加如下命令：gnome<span class="hljs-attribute">-terminal</span> 然后设置快捷键 我设置的是windows<span class="hljs-subst">+</span>R</code></pre>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     补充：经过大量的实践，最终的结果就是U盘上还是用kali linux 1.0.9吧！
+     <br/>
+     因为你无法安装上。2.0.死了这条心吧。
+     <br/>
+     另外推荐多去看看官网的文档。使用官网的更新源。
+     <br/>
+     并且kali 下有很多工具，自己用到什么工具再安装什么工具，不要嫌工具少，主要是要会用才行。
+    </p>
+    <p>
+     最后在说一下，kali linux 还是在虚拟机上用用就行了，不一定要用在物理机上。且用且珍惜。
+     <br/>
+     U盘上，我只成功过kali1.0版本的，通过虚拟机实现。
+     <br/>
+     其实，为了方便，如果没有特殊的要求的话，我们完全可以使用live模式，如果还想暂存一些文件，那么可以使用live persistence模式，这两种模式实现起来简单。我也专门写了一篇文章讲如何实现。
+     <br/>
+     Live模式：在kali下的所有改动均不会保存。
+     <br/>
+     Live persistence模式，相当于挂载了一个分区，可以对这个分区进行文件的修改，但是对系统本身配置参数的修改仍然不会保留。
+    </p>
+    <p>
+     <strong>
+      本文于2018-2-10更新
+     </strong>
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/72542218
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=linux&amp;t=blog" target="_blank">
+    linux
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=kali&amp;t=blog" target="_blank">
+    kali
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=vmTools&amp;t=blog" target="_blank">
+    vmTools
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/6925811" target="_blank">
+    kali linux
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

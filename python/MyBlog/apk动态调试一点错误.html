@@ -1,0 +1,87 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   apk动态调试一点错误
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年03月11日 10:29:21
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：39
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     <strong>
+      <em>
+       以前懵懵懂懂的我，突然感觉长大了，希望我们能长长久久。
+      </em>
+     </strong>
+     <br/>
+     今天在调试一个案例的时候，又是折腾了好久。特此记录下。
+    </p>
+    <h3 id="错误">
+     错误
+    </h3>
+    <p>
+     这是一个CryptoDemo案例，我试图调试encrypt.so这个库文件的，刚开始我使用了debuggable模式进行调试，但是在调试的过程中发现始终无法加载这个so，甚至我连搜索都搜索不到。心情一阵郁闷，我尝试了各种古怪的方法，甚至还换了个手机进行尝试。都是以失败告终。
+    </p>
+    <h3 id="正确">
+     正确
+    </h3>
+    <p>
+     正确的理解是这样的。
+     <br/>
+     首先来看一下常用段的执行时机。
+     <br/>
+     .init_array是so最先加载的一个段信息，JNI_OnLoad是so被System.loadLibrary调用的时候执行，它的时机早于native方法，使用debuggable模式进行调试的时候apk还未运行，因此so库还未被加载。所以呢，我们只需要正常模式启动apk，然后附加调试即可。
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79514211
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=apk&amp;t=blog" target="_blank">
+    apk
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=调试&amp;t=blog" target="_blank">
+    调试
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

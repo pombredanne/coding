@@ -1,0 +1,167 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   IDA反编译so文件导入Jni
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年01月12日 18:59:29
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：422
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     今天看了这个wp，可能让我收获最多的就是知道了IDA可以通过加载jni.h文件，使so反汇编之后能更清晰。
+     <br/>
+     <strong>
+      <em>
+       主要有三种方法可以实现，接下来逐一进行介绍。
+      </em>
+     </strong>
+    </p>
+    <h3 id="方法一">
+     方法一：
+    </h3>
+    <p>
+     这个方法可能在低版本的IDA下，无法实现。我这里的IDA版本是7.0，其他版本我没有做测试。首先将so文件拖入IDA,已默认方式加载，IDA会自动进行识别
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180112185626425?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以看到反汇编之后，很多Jni的结构体没有识别出来。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180112185638307?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     View-&gt;Open subviews-&gt;Type Libraries 或者shift+F11
+     <br/>
+     Insert 选中android arm
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180112185647475?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     确定即可。之后再structure选项卡中Insert
+     <br/>
+     Add standard structure 将JniEnv导入即可
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180112185656397?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     之后我们再回到原来的函数将第一个参数变为JniEnv*（右键-&gt;convert to struct*）选择我们刚刚导入的JniEnv，再将casts隐藏一下，函数就会变得很明了。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180112185706119?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+    </p>
+    <h3 id="第二种方法">
+     第二种方法：
+    </h3>
+    <p>
+     其实这种方法，只有前面的操作不同，后面都是一样的，并且对IDA的版本没有要求。
+     <br/>
+     首先找到NDK中包含jni.h文件的路径，以及你的vs的VC的include的路径。
+     <br/>
+     NDK选路径的时候android的版本号要和我们需要反汇编的so文件的版本号对应，比如说我这里的so文件的版本号是22，因此我选择android-22的include路径。
+     <br/>
+     D:\JavaSE\ndk\android-ndk-r14b-windows-x86_64\android-ndk-r14b\platforms\android-22\arch-arm\usr\include
+     <br/>
+     D:\vs2012\VC\include
+     <br/>
+     这是我的路径，作为参考，在添加路径时需要将”\”转化为”/”.
+     <br/>
+     接下来回到IDA。
+     <br/>
+     Option-&gt;compiler
+     <br/>
+     选择Visual C++，Include directories中用我们刚才找到的两条路径替换，并在Predefiined macros中添加
+     <strong>
+      lint
+     </strong>
+     宏，之后导入Jni.h文件 shift+F9,选中刚才路径下的Jni.h文件
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180112185716039?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     报错，只需根据具体的报错原因，修改Jni.h即可，这里将stdarg.h 一行注释掉，记得备份一下。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180112185722756?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     在次导入，成功。
+     <br/>
+     后面的操作就是一样的了，在structure选项卡添加，修改第一个变量类型为JniEnv
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180112185730177?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     ###第三种方法：(2018/3/10)
+     <br/>
+     我从大黄书上有了解到一种方法，还是挺方便的。
+     <br/>
+     只需要在需要改变的变量上按Y键，然后修改为JNIEnv* 即可，IDA会自动识别。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180310172932679?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180310172939843?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+     <br/>
+     另外在说一下这个JNIEnv类型的一些特点；
+    </p>
+    <pre class="prettyprint"><code class=" hljs delphi">JNIEnv方法对应的数字：
+<span class="hljs-number">672</span> GetStringUTFLength jsize<span class="hljs-comment">(*)（JNIEnv* ，jstring）
+676 GetStringUTFChars     const char* (*)</span> (JNIEnv * ,jstring ,jboolean*)
+<span class="hljs-number">680</span> ReleaseStringUTFChars    void <span class="hljs-comment">(*) (JNIEnv*  ,jstring, const char*)</span>
+<span class="hljs-number">684</span> GetArrayLength         jsize <span class="hljs-comment">(*) (JNIEnv* ,jarray)
+688  NewObjectArray    jobjectArray (*)</span> (JNIEnv * ,jsize ,jclass ,jobject )</code></pre>
+    <p>
+     可以和上面图中的为修改之前进行对比一下。
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     我想知道了这一点之后会对分析android的so文件提供很大的帮助，希望大家在逆向的越走越远！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79047291
+  </div>
+  <div class="tags-box artic-tag-box">
+   <span class="label">
+    文章标签：
+   </span>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=jni&amp;t=blog" target="_blank">
+    jni
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=android&amp;t=blog" target="_blank">
+    android
+   </a>
+   <a class="tag-link" href="http://so.csdn.net/so/search/s.do?q=reserve&amp;t=blog" target="_blank">
+    reserve
+   </a>
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>

@@ -1,0 +1,150 @@
+<div class="blog-content-box">
+ <div class="article-title-box">
+  <span class="article-type type-1 float-left">
+   原
+  </span>
+  <h1 class="title-article">
+   动手实现smali中插入打印日志代码
+  </h1>
+ </div>
+ <div class="article-info-box">
+  <div class="article-bar-top d-flex">
+   <span class="time">
+    2018年03月08日 14:38:03
+   </span>
+   <div class="float-right">
+    <span class="read-count">
+     阅读数：53
+    </span>
+   </div>
+  </div>
+ </div>
+ <article>
+  <div class="article_content clearfix csdn-tracking-statistics" data-dsm="post" data-mod="popu_307" data-pid="blog" id="article_content">
+   <div class="markdown_views">
+    <h1 id="前言">
+     前言
+    </h1>
+    <p>
+     日志功能在我们平时开发调试的时候是一件很平常的事，但是网上的app在发布时是没有日志，那么如果我们想要获取apk内的一些变量的，就可以通过网smali中添加日志，甚至是其它功能，来达到我们的目的。
+    </p>
+    <h3 id="准备">
+     准备
+    </h3>
+    <p>
+     基本上不需要特别的准备工作。
+     <br/>
+     使用到的工具：AS，AndroidKiller，或者其它的反编译工具都可以
+    </p>
+    <h3 id="一">
+     一、
+    </h3>
+    <p>
+     首先使用AS创建一个简单的项目(Enpty Activity)。之后新建一个class，我将其命名为
+     <code>
+      MyCrack
+     </code>
+     ，添加如下代码
+    </p>
+    <pre class="prettyprint"><code class=" hljs cs"><span class="hljs-keyword">public</span> <span class="hljs-keyword">class</span> MyCrack {
+    <span class="hljs-keyword">public</span> <span class="hljs-keyword">static</span> <span class="hljs-keyword">void</span> <span class="hljs-title">Logd</span>(String v0){
+        Log.d(<span class="hljs-string">"hx"</span>, <span class="hljs-string">"Logd: "</span>+v0);
+    }
+}</code></pre>
+    <p>
+     注意要用
+     <code>
+      static
+     </code>
+     进行修饰，之后在
+     <code>
+      onCreate
+     </code>
+     中进行调用
+    </p>
+    <pre class="prettyprint"><code class=" hljs avrasm">MyCrack<span class="hljs-preprocessor">.Logd</span>(<span class="hljs-string">"this is the test"</span>)<span class="hljs-comment">;</span></code></pre>
+    <p>
+     签名并打包生成apk文件。
+    </p>
+    <h3 id="二">
+     二、
+    </h3>
+    <p>
+     将上一步生成好的apk文件拖入AndroidKiller进行反编译
+     <br/>
+     会看到如下的目录结构。
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180308114415424?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast" title=""/>
+     <br/>
+     可以看到smali中的代码在调用时是通过
+     <code>
+      invoke-static {v0}, Lcom/code/jsk/test/MyCrack;-&gt;Logd(Ljava/lang/String;)V
+     </code>
+     进行调用的。
+     <br/>
+     但是为了方便我们在其他apk中插入smali代码，我们不可能新建
+     <code>
+      com/code/jsk/test/
+     </code>
+     这样的目录结构，因此我们需要对smali代码进行略微的修改
+    </p>
+    <h3 id="三">
+     三、
+    </h3>
+    <p>
+     修改smali代码如下
+    </p>
+    <pre class="prettyprint"><code class=" hljs java">.class <span class="hljs-keyword">public</span> LMyCrack;
+.<span class="hljs-keyword">super</span> Ljava/lang/Object;
+.source <span class="hljs-string">"MyCrack.java"</span></code></pre>
+    <p>
+     其实就是将
+     <code>
+      Lcom/code/jsk/test/MyCrack
+     </code>
+     修改为了
+     <code>
+      LMyCrack
+     </code>
+     <br/>
+     然后在需要打印日志的位置插入
+    </p>
+    <pre class="prettyprint"><code class=" hljs lasso">const<span class="hljs-attribute">-string</span> v0, <span class="hljs-string">"this is the test"</span>
+invoke<span class="hljs-attribute">-static</span> {v0}, LMyCrack;<span class="hljs-subst">-&gt;</span>Logd(Ljava/lang/<span class="hljs-built_in">String</span>;)V</code></pre>
+    <p>
+     注意这时需要将MyCrack.smali文件放到smali目录下
+     <br/>
+     <img alt="这里写图片描述" src="https://img-blog.csdn.net/20180308143619946?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvcXFfMzM0Mzg3MzM=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" title=""/>
+    </p>
+    <h1 id="总结">
+     总结
+    </h1>
+    <p>
+     我们可以利用这种方法，通过smali注入各种想要实现的代码。
+     <br/>
+     有趣吧！
+    </p>
+   </div>
+   <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
+  </div>
+  <div class="hide-article-box text-center csdn-tracking-statistics tracking-click" data-mod="popu_376">
+   <a class="btn btn-red-hollow" id="btn-readmore">
+    阅读更多
+   </a>
+  </div>
+ </article>
+ <div class="article-bar-bottom">
+  <div class="article-copyright">
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/79482354
+  </div>
+  <div class="tags-box">
+   <span class="label">
+    个人分类：
+   </span>
+   <a class="tag-link" href="https://blog.csdn.net/qq_33438733/article/category/7398667" target="_blank">
+    android
+   </a>
+  </div>
+ </div>
+ <!-- !empty($pre_next_article[0]) -->
+</div>
