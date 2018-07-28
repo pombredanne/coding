@@ -29,8 +29,8 @@ istream& read_hw2(istream& in,vector<double>& hw){
     while(in >> x){
         hw.push_back(x);
     }
-    in.clear();
     }
+    in.clear();
     return in;
 }
 istream& read(istream& in,Stdudent_info& s){
