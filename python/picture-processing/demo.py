@@ -1,12 +1,13 @@
 from PIL import Image
 import optparse
+import sys
 # import logging
 
 # logger = logging.basicConfig(level=logging.DEBUG)
 usage = 'Usage: %prog [-h-o-c1-c2-cc-p] arg1 arg2 ...'
 parser = optparse.OptionParser(usage, version="%prog 1.0")
 parser.add_option('-o', '--output', type=str,
-                  action='store', dest='output', default='output.jpg',
+                  action='store', dest='output',
                   metavar="FILE", help='write output to FILE')
 parser.add_option('-s', '--show',
                   action='store_true', dest='show',
@@ -76,10 +77,12 @@ def showAttribute(ins):
 
 
 (options, args) = parser.parse_args()
-output = 'output.jpg'
+
 if not args:
     print 'please input you image!'
 else:
+    output = args[0].split(".")[0]+"_out."+args[0].split(".")[1]
+    print output
     ins = args[0]
     if options.output:
         output = options.output
