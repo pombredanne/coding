@@ -14,6 +14,13 @@ void tea_encrypt (uint32_t* v, uint32_t* k);//Tea 加密函数
 
 void tea_decrypt (uint32_t* v, uint32_t* k);//Tea 解密函数
 
+void xtea_encypt(unsigned int num_rounds, uint32_t v[2], uint32_t const key[4]);//xTea
+
+void xtea_decrypt(unsigned int num_rounds, uint32_t v[2], uint32_t const key[4]);//xTea
+
+void xxtea_btea(uint32_t *v, int n, uint32_t const key[4]);//xxTea
+
+
 // scale exchange
 int tolower(int c);/*将大写字母转换成小写字母*/  
 
