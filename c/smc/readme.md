@@ -1,0 +1,4 @@
+# smc
+
+Self-Modifying—code
+
