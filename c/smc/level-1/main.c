@@ -80,6 +80,8 @@ int main(int argc,char ** argv){
     for(i=0;i<23;i++){
         enc[i] = enc[i]^(i+0x31);
     }
+
+    
     rc4_init(s,(uint8_t *)key, strlen(key)); //初始化密钥
     rc4_crypt(s,(uint8_t *)enc,strlen(enc));//解密
     // Hex2Str( (const char *)flag,  sDest, keyLen );
