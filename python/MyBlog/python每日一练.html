@@ -4,13 +4,13 @@
    原
   </span>
   <h1 class="title-article">
-   python每日一练
+   Python每日一练
   </h1>
  </div>
  <div class="article-info-box">
   <div class="article-bar-top d-flex">
    <span class="time">
-    2018年06月03日 13:32:45
+    2018年06月13日 23:15:28
    </span>
    <div class="float-right">
     <span class="read-count">
@@ -26,53 +26,84 @@
      前言
     </h1>
     <p>
-     人生苦短，我用python【2018.6.3】
+     人生苦短，我用python【2018.6.13】
+     <br/>
+     <strong>
+      <em>
+       最近事情有点多，有几天没写了，正好最近需要统计一下各组排名，也就拿python代替手工了
+      </em>
+     </strong>
     </p>
     <h3 id="要求">
      要求
     </h3>
     <p>
-     统计文本文件中单词的个数
+     各组给出其他组的排名，统计每个组最终的得分，第一名为0.5，第二名0.4，以此类推。
     </p>
     <h3 id="代码">
      代码
     </h3>
     <pre class="prettyprint"><code class=" hljs python"><span class="hljs-comment"># -*- coding:utf-8 -*-</span>
-<span class="hljs-keyword">import</span> re
+groups = [[<span class="hljs-number">3</span>, <span class="hljs-number">2</span>, <span class="hljs-number">5</span>, <span class="hljs-number">4</span>, <span class="hljs-number">6</span>], [<span class="hljs-number">1</span>, <span class="hljs-number">3</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>, <span class="hljs-number">4</span>], [<span class="hljs-number">5</span>, <span class="hljs-number">6</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">4</span>], [<span class="hljs-number">3</span>, <span class="hljs-number">2</span>, <span class="hljs-number">1</span>, <span class="hljs-number">5</span>, <span class="hljs-number">6</span>], [<span class="hljs-number">6</span>, <span class="hljs-number">3</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">4</span>], [<span class="hljs-number">5</span>, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">4</span>]]
+score = [<span class="hljs-number">0.5</span>, <span class="hljs-number">0.4</span>, <span class="hljs-number">0.3</span>, <span class="hljs-number">0.2</span>, <span class="hljs-number">0.1</span>]
+group_results = [<span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>]
+
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">statics</span><span class="hljs-params">()</span>:</span>
+    <span class="hljs-keyword">for</span> group <span class="hljs-keyword">in</span> groups:
+        <span class="hljs-keyword">for</span> index <span class="hljs-keyword">in</span> range(<span class="hljs-number">0</span>, <span class="hljs-number">5</span>):
+            <span class="hljs-keyword">if</span> group[index] == <span class="hljs-number">1</span>:
+                group_results[<span class="hljs-number">0</span>] += score[index]
+            <span class="hljs-keyword">if</span> group[index] == <span class="hljs-number">2</span>:
+                group_results[<span class="hljs-number">1</span>] += score[index]
+            <span class="hljs-keyword">if</span> group[index] == <span class="hljs-number">3</span>:
+                group_results[<span class="hljs-number">2</span>] += score[index]
+            <span class="hljs-keyword">if</span> group[index] == <span class="hljs-number">4</span>:
+                group_results[<span class="hljs-number">3</span>] += score[index]
+            <span class="hljs-keyword">if</span> group[index] == <span class="hljs-number">5</span>:
+                group_results[<span class="hljs-number">4</span>] += score[index]
+            <span class="hljs-keyword">if</span> group[index] == <span class="hljs-number">6</span>:
+                group_results[<span class="hljs-number">5</span>] += score[index]
+    <span class="hljs-keyword">return</span> group_results
 
 
 <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">main</span><span class="hljs-params">()</span>:</span>
-    fp = open(<span class="hljs-string">"word.txt"</span>, <span class="hljs-string">"r"</span>)
-    dictResult = {}
-    <span class="hljs-keyword">for</span> line <span class="hljs-keyword">in</span> fp.readlines():
-        li = re.findall(<span class="hljs-string">r"[\w-]+"</span>, line.lower(), re.I)
-        <span class="hljs-keyword">for</span> letter <span class="hljs-keyword">in</span> li:
-            dictResult[letter] = <span class="hljs-number">1</span> + dictResult.get(letter, <span class="hljs-number">0</span>)
-        <span class="hljs-comment"># word_list = reduce(lambda x, y: x + y, li) #将多维列表 转化为一维列表</span>
-    <span class="hljs-comment"># count total word</span>
-    <span class="hljs-keyword">print</span> len(dictResult)
-    <span class="hljs-comment"># sort the key</span>
-    <span class="hljs-keyword">print</span> sorted(dictResult.keys())
-    <span class="hljs-comment"># sort the value</span>
-    result = sorted(dictResult.items(), key=<span class="hljs-keyword">lambda</span> item: item[<span class="hljs-number">1</span>])  <span class="hljs-comment"># dictResult.items()创建了可迭代的对象</span>
-    <span class="hljs-keyword">print</span> result
-    <span class="hljs-keyword">print</span> dictResult
+    group_results = statics()
+    index = <span class="hljs-number">0</span>
+    <span class="hljs-keyword">for</span> result <span class="hljs-keyword">in</span> group_results:
+        <span class="hljs-keyword">print</span> (<span class="hljs-string">"the group {index} is :{grade}\n"</span>.format(index=index + <span class="hljs-number">1</span>, grade=result))
+        index += <span class="hljs-number">1</span>
 
 
-<span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">"__main__"</span>:
+<span class="hljs-keyword">if</span> __name__ == <span class="hljs-string">'__main__'</span>:
     main()
 </code></pre>
+    <pre class="prettyprint"><code class=" hljs cs"><span class="hljs-preprocessor">#result：</span>
+the <span class="hljs-keyword">group</span> <span class="hljs-number">1</span> <span class="hljs-keyword">is</span> :<span class="hljs-number">1.8000000000000003</span>
+
+the <span class="hljs-keyword">group</span> <span class="hljs-number">2</span> <span class="hljs-keyword">is</span> :<span class="hljs-number">1.5</span>
+
+the <span class="hljs-keyword">group</span> <span class="hljs-number">3</span> <span class="hljs-keyword">is</span> :<span class="hljs-number">1.9999999999999998</span>
+
+the <span class="hljs-keyword">group</span> <span class="hljs-number">4</span> <span class="hljs-keyword">is</span> :<span class="hljs-number">0.6</span>
+
+the <span class="hljs-keyword">group</span> <span class="hljs-number">5</span> <span class="hljs-keyword">is</span> :<span class="hljs-number">1.8</span>
+
+the <span class="hljs-keyword">group</span> <span class="hljs-number">6</span> <span class="hljs-keyword">is</span> :<span class="hljs-number">1.3</span>
+
+[Finished <span class="hljs-keyword">in</span> <span class="hljs-number">0.1</span>s]</code></pre>
     <p>
-     返回结果：
+     <strong>
+      <em>
+       感觉sublime有毒，控制台输出中文乱码的问题解决不了，python3计算小数时会有小数点
+      </em>
+     </strong>
     </p>
-    <pre class="prettyprint"><code class=" hljs bash">[<span class="hljs-string">'allow'</span>, <span class="hljs-string">'and'</span>, <span class="hljs-string">'as'</span>, <span class="hljs-string">'assets'</span>, <span class="hljs-string">'bank'</span>, <span class="hljs-string">'banks'</span>, <span class="hljs-string">'beijing'</span>, <span class="hljs-string">'by'</span>, <span class="hljs-string">'central'</span>, <span class="hljs-string">'china'</span>, <span class="hljs-string">'chongqing'</span>, <span class="hljs-string">'credit'</span>, <span class="hljs-string">'economy'</span>, <span class="hljs-string">'first'</span>, <span class="hljs-string">'guangdong'</span>, <span class="hljs-string">'high-quality'</span>, <span class="hljs-string">'in'</span>, <span class="hljs-string">'introduced'</span>, <span class="hljs-string">'last'</span>, <span class="hljs-string">'latest'</span>, <span class="hljs-string">'move'</span>, <span class="hljs-string">'municipalities'</span>, <span class="hljs-string">'of'</span>, <span class="hljs-string">'other'</span>, <span class="hljs-string">'people'</span>, <span class="hljs-string">'program'</span>, <span class="hljs-string">'provinces'</span>, <span class="hljs-string">'rated'</span>, <span class="hljs-string">'refinance'</span>, <span class="hljs-string">'s'</span>, <span class="hljs-string">'said'</span>, <span class="hljs-string">'shandong'</span>, <span class="hljs-string">'shanghai'</span>, <span class="hljs-string">'six'</span>, <span class="hljs-string">'support'</span>, <span class="hljs-string">'the'</span>, <span class="hljs-string">'to'</span>, <span class="hljs-string">'was'</span>, <span class="hljs-string">'will'</span>, <span class="hljs-string">'year'</span>]
-[(<span class="hljs-string">'beijing'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'shandong'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'six'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'people'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'move'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'year'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'as'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'program'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'guangdong'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'rated'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'support'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'shanghai'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'other'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'was'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'economy'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'municipalities'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'last'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'refinance'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'said'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'china'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'central'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'by'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'chongqing'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'introduced'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'high-quality'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'assets'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'of'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'will'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'credit'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'s'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'allow'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'banks'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'first'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'latest'</span>, <span class="hljs-number">1</span>), (<span class="hljs-string">'in'</span>, <span class="hljs-number">2</span>), (<span class="hljs-string">'provinces'</span>, <span class="hljs-number">2</span>), (<span class="hljs-string">'to'</span>, <span class="hljs-number">2</span>), (<span class="hljs-string">'bank'</span>, <span class="hljs-number">2</span>), (<span class="hljs-string">'and'</span>, <span class="hljs-number">3</span>), (<span class="hljs-string">'the'</span>, <span class="hljs-number">5</span>)]
-{<span class="hljs-string">'and'</span>: <span class="hljs-number">3</span>, <span class="hljs-string">'beijing'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'shandong'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'six'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'people'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'move'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'year'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'as'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'program'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'in'</span>: <span class="hljs-number">2</span>, <span class="hljs-string">'guangdong'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'provinces'</span>: <span class="hljs-number">2</span>, <span class="hljs-string">'rated'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'support'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'shanghai'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'to'</span>: <span class="hljs-number">2</span>, <span class="hljs-string">'other'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'was'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'economy'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'municipalities'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'last'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'refinance'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'said'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'china'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'central'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'by'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'bank'</span>: <span class="hljs-number">2</span>, <span class="hljs-string">'chongqing'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'introduced'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'high-quality'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'assets'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'of'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'will'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'credit'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'s'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'allow'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'banks'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'the'</span>: <span class="hljs-number">5</span>, <span class="hljs-string">'first'</span>: <span class="hljs-number">1</span>, <span class="hljs-string">'latest'</span>: <span class="hljs-number">1</span>}</code></pre>
     <h1 id="总结">
      总结
     </h1>
     <p>
-     学习了正则表达式的匹配和字典的用法，按key排序和按value排序，也浅尝了lambda表达式。
+     解放双手！
     </p>
    </div>
    <link href="https://csdnimg.cn/release/phoenix/template/css/markdown_views-ea0013b516.css" rel="stylesheet"/>
@@ -85,7 +116,7 @@
  </article>
  <div class="article-bar-bottom">
   <div class="article-copyright">
-   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80556046
+   版权声明：本文为博主原创文章，未经博主允许不得转载。			https://blog.csdn.net/qq_33438733/article/details/80686596
   </div>
   <div class="tags-box">
    <span class="label">
